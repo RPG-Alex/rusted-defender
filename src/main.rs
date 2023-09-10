@@ -1,12 +1,13 @@
 //! Renders a 2D scene containing a single, moving sprite.
+use bevy::{prelude::*, audio::{VolumeLevel, self}, input::keyboard::KeyboardInput};
 
-use bevy::prelude::*;
+
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_systems(Startup, setup)
-        .add_systems(Update, sprite_movement)
+        .add_systems(Update, (sprite_auto_movement,sprite_control))
         .run();
 }
 
@@ -38,7 +39,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         transform: Transform::from_xyz(0., 0., -10.), // Ensure Z-coordinate is behind other entities
         ..default()
     }).insert(SpriteType::Background);
-
+    //player sprite
     commands.spawn((
         SpriteBundle {
             //Adjust Sprite Size
@@ -50,8 +51,8 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             transform: Transform::from_xyz(0., 0., 0.),
             ..default()
         },
-        Direction::Left,
     )).insert(SpriteType::Player);
+    //enemy sprite
     commands.spawn((
         SpriteBundle {
             //Adjust Sprite Size
@@ -68,6 +69,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     commands.spawn(AudioBundle {
         source: asset_server.load("sound/background-track-1.ogg"),
+        settings: PlaybackSettings { mode: (audio::PlaybackMode::Loop), volume: (audio::Volume::new_relative(1.0)), speed: (1.0), paused: (false) },
         ..default()
     });
 }
@@ -75,9 +77,9 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 
 /// The sprite is animated by changing its translation depending on the time that has passed since
 /// the last frame.
-fn sprite_movement(time: Res<Time>, mut sprite_position: Query<(&mut Direction, &mut Transform)>) {
-    for (mut logo, mut transform) in &mut sprite_position {
-        match *logo {
+fn sprite_auto_movement(time: Res<Time>, mut sprite_position: Query<(&mut Direction, &mut Transform)>) {
+    for (mut sprite, mut transform) in &mut sprite_position {
+        match *sprite {
             Direction::Up => transform.translation.y += 150. * time.delta_seconds(),
             Direction::Down => transform.translation.y -= 150. * time.delta_seconds(),
             Direction::Right => transform.translation.x += 150. * time.delta_seconds(),
@@ -85,11 +87,11 @@ fn sprite_movement(time: Res<Time>, mut sprite_position: Query<(&mut Direction, 
         }
 
         // Check the boundaries and update the direction
-        match *logo {
-            Direction::Up if transform.translation.y >= 200. => *logo = Direction::Right,
-            Direction::Right if transform.translation.x >= 200. => *logo = Direction::Down,
-            Direction::Down if transform.translation.y <= -200. => *logo = Direction::Left,
-            Direction::Left if transform.translation.x <= -200. => *logo = Direction::Up,
+        match *sprite {
+            Direction::Up if transform.translation.y >= 200. => *sprite = Direction::Right,
+            Direction::Right if transform.translation.x >= 200. => *sprite = Direction::Down,
+            Direction::Down if transform.translation.y <= -200. => *sprite = Direction::Left,
+            Direction::Left if transform.translation.x <= -200. => *sprite = Direction::Up,
             _ => {}
         }
         
@@ -101,3 +103,24 @@ fn sprite_movement(time: Res<Time>, mut sprite_position: Query<(&mut Direction, 
     
 }
 
+fn sprite_control(mut sprite_position: Query<(&mut Transform, &mut SpriteType)>, keyboard_input: Res<Input<KeyCode>>){
+        
+    for (mut transform, sprite_type) in &mut sprite_position {
+        if *sprite_type == SpriteType::Player {
+            if keyboard_input.pressed(KeyCode::Left) {
+                transform.translation.x -= 10.0;
+            }
+            if keyboard_input.pressed(KeyCode::Right) {
+                transform.translation.x += 10.0
+            }
+            if keyboard_input.pressed(KeyCode::Down) {
+                transform.translation.y -= 10.0;
+            }
+            if keyboard_input.pressed(KeyCode::Up) {
+                transform.translation.y += 10.0
+            }
+        }
+
+    }
+
+}
