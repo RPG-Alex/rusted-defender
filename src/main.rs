@@ -10,6 +10,17 @@ fn main() {
         .run();
 }
 
+
+///Create enum for distinguishing between sprites
+#[derive(Component, PartialEq)]
+enum SpriteType {
+    Player, 
+    Enemy,
+    Background,
+}
+
+
+///enum for defining direction (Cardinal style)
 #[derive(Component)]
 enum Direction {
     Up,
@@ -26,16 +37,39 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         texture: asset_server.load("backgrounds/rusted-defender-home-screen.png"),
         transform: Transform::from_xyz(0., 0., -10.), // Ensure Z-coordinate is behind other entities
         ..default()
-    });
+    }).insert(SpriteType::Background);
 
     commands.spawn((
         SpriteBundle {
+            //Adjust Sprite Size
+            sprite: Sprite {
+                custom_size: Some(Vec2::new(200.0, 200.0)),
+                ..default()
+            },
             texture: asset_server.load("sprites/mech-sprite.png"),
             transform: Transform::from_xyz(0., 0., 0.),
             ..default()
         },
         Direction::Left,
-    ));
+    )).insert(SpriteType::Player);
+    commands.spawn((
+        SpriteBundle {
+            //Adjust Sprite Size
+            sprite: Sprite {
+                custom_size: Some(Vec2::new(200.0, 200.0)),
+                ..default()
+            },
+            texture: asset_server.load("sprites/enemy-sprite-1.png"),
+            transform: Transform::from_xyz(200., 200., 0.),
+            ..default()
+        },
+        Direction::Right,
+    )).insert(SpriteType::Enemy);
+
+    commands.spawn(AudioBundle {
+        source: asset_server.load("sound/background-track-1.ogg"),
+        ..default()
+    });
 }
 
 
