@@ -1,5 +1,8 @@
-//! Renders a 2D scene containing a single, moving sprite.
-use bevy::{prelude::*, audio::{VolumeLevel, self}, input::keyboard::KeyboardInput};
+//Import the necessary bevy features
+use bevy::{
+    prelude::*, 
+    audio,
+};
 
 
 
@@ -10,6 +13,7 @@ fn main() {
         .add_systems(Update, (sprite_auto_movement,sprite_control))
         .run();
 }
+
 
 
 ///Create enum for distinguishing between sprites
@@ -103,6 +107,7 @@ fn sprite_auto_movement(time: Res<Time>, mut sprite_position: Query<(&mut Direct
     
 }
 
+///Function used for passing user inputs to contrl sprite(s)
 fn sprite_control(mut sprite_position: Query<(&mut Transform, &mut SpriteType)>, keyboard_input: Res<Input<KeyCode>>){
         
     for (mut transform, sprite_type) in &mut sprite_position {
@@ -123,4 +128,18 @@ fn sprite_control(mut sprite_position: Query<(&mut Transform, &mut SpriteType)>,
 
     }
 
+}
+
+
+// First version of simple function for detecting collisions, under construction.
+// TODO: workout how to compare two entities locations and reset player location if too close
+fn sprites_collide(mut sprite_position: Query<(&mut Transform, &mut SpriteType)>) {
+    let mut sprite_location = Transform::from_xyz(0.0, 0.0, 0.0);
+    for (mut transform, sprite_type) in &mut sprite_position {
+        if *sprite_type == SpriteType::Enemy {
+            sprite_location = sprite_location;
+        } else if  *sprite_type == SpriteType::Player {
+            
+        }
+    } 
 }
