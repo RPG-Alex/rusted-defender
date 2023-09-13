@@ -39,6 +39,11 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     // Adding the background
     commands.spawn(SpriteBundle {
+        sprite: Sprite {
+            // This sets the background image size. Not dynamic. Needs to be changed to adjust to viewport size
+            custom_size: Some(Vec2::new(1920.0, 1080.0)),
+            ..default()
+        },
         texture: asset_server.load("backgrounds/rusted-defender-home-screen.png"),
         transform: Transform::from_xyz(0., 0., -10.), // Ensure Z-coordinate is behind other entities
         ..default()
