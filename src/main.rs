@@ -10,7 +10,7 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_systems(Startup, setup)
-        .add_systems(Update, (sprite_auto_movement,sprite_control))
+        .add_systems(Update, (sprite_auto_movement,sprite_control, sprites_collide))
         .run();
 }
 
@@ -137,14 +137,54 @@ fn sprite_control(mut sprite_position: Query<(&mut Transform, &mut SpriteType)>,
 
 
 // First version of simple function for detecting collisions, under construction.
-// TODO: workout how to compare two entities locations and reset player location if too close
-fn sprites_collide(mut sprite_position: Query<(&mut Transform, &mut SpriteType)>) {
-    let mut sprite_location = Transform::from_xyz(0.0, 0.0, 0.0);
-    for (mut transform, sprite_type) in &mut sprite_position {
-        if *sprite_type == SpriteType::Enemy {
-            sprite_location = sprite_location;
-        } else if  *sprite_type == SpriteType::Player {
-            
+// This is really messy and I"m not sure I fully understand why its working
+fn sprites_collide(mut sprite_position: Query<(&mut Transform, &SpriteType, &Sprite)>) {
+    let mut player_position: Option<Transform> = None;
+    let mut enemy_position: Option<Transform> = None;
+    let mut player_size: Option<Vec2> = None;
+    let mut enemy_size: Option<Vec2> = None;
+
+    for (transform, sprite_type, sprite) in &mut sprite_position.iter() {
+        let size = sprite.custom_size.unwrap_or_else(|| sprite.rect.as_ref().map_or(Vec2::new(0.0,0.0), |r| r.size()));
+        match *sprite_type {
+            SpriteType::Player => {
+                player_position = Some(*transform);
+                player_size = Some(size);
+            }
+            SpriteType::Enemy => {
+                enemy_position = Some(*transform);
+                enemy_size = Some(size);
+            }
+            _ => {}
         }
-    } 
+    }
+
+    if let (Some(player_pos), Some(player_s), Some(enemy_pos), Some(enemy_s)) = (player_position, player_size, enemy_position, enemy_size){
+        let player_min = player_pos.translation.truncate() - player_s / 2.0;
+        let player_max = player_pos.translation.truncate() + player_s / 2.0;
+
+        let enemy_min = enemy_pos.translation.truncate() - enemy_s / 2.0;
+        let enemy_max = enemy_pos.translation.truncate() + enemy_s / 2.0;
+
+        if aabb_collision(player_min, player_max, enemy_min, enemy_max) {
+            for (mut transform, sprite_type, _) in sprite_position.iter_mut(){
+                if *sprite_type == SpriteType::Player {
+                    transform.translation = Vec3::new(0.0, 0.0, transform.translation.z);
+                }
+            }
+        }
+    }
+}
+
+// aabb_collision function (probably bevy has something better for collision)
+fn aabb_collision(
+    min_a: Vec2, max_a: Vec2,
+    min_b: Vec2, max_b: Vec2
+) -> bool {
+    if min_a.x > max_b.x || max_a.x < min_b.x {
+        return false;
+    } if min_a.y > max_b.y || max_a.y < min_b.y {
+        return false;
+    }
+    true
 }
