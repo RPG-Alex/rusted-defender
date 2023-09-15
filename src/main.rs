@@ -113,15 +113,27 @@ fn sprite_auto_movement(time: Res<Time>, mut sprite_position: Query<(&mut Direct
 }
 
 ///Function used for passing user inputs to contrl sprite(s)
-fn sprite_control(mut sprite_position: Query<(&mut Transform, &mut SpriteType)>, keyboard_input: Res<Input<KeyCode>>){
-        
+fn sprite_control(mut sprite_position: Query<(&mut Transform, &mut SpriteType)>, keyboard_input: Res<Input<KeyCode>>, mut windows: Query<&mut Window>){
+    //Adding logic for detecting window size (probably won't live here long term)
+    let window = windows.single_mut();
+    let window_width = window.width();
+    let window_height = window.height();
+    
+    
+
     for (mut transform, sprite_type) in &mut sprite_position {
         if *sprite_type == SpriteType::Player {
             if keyboard_input.pressed(KeyCode::Left) {
                 transform.translation.x -= 10.0;
+                if transform.translation.x < 0.0 {
+                    transform.translation.x = window_width;
+                }
             }
             if keyboard_input.pressed(KeyCode::Right) {
-                transform.translation.x += 10.0
+                transform.translation.x += 10.0;
+                if transform.translation.x > window_width {
+                    transform.translation.x = 0.0;
+                }
             }
             if keyboard_input.pressed(KeyCode::Down) {
                 transform.translation.y -= 10.0;
