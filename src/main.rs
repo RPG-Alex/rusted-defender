@@ -57,7 +57,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 ..default()
             },
             texture: asset_server.load("sprites/mech-sprite.png"),
-            transform: Transform::from_xyz(0., 0., 0.),
+            transform: Transform::from_xyz(-200.0, -200., 0.),
             ..default()
         },
     )).insert(SpriteType::Player);
@@ -116,8 +116,8 @@ fn sprite_auto_movement(time: Res<Time>, mut sprite_position: Query<(&mut Direct
 fn sprite_control(mut sprite_position: Query<(&mut Transform, &mut SpriteType)>, keyboard_input: Res<Input<KeyCode>>, mut windows: Query<&mut Window>){
     //Adding logic for detecting window size (probably won't live here long term)
     let window = windows.single_mut();
-    let window_width = window.width();
-    let window_height = window.height();
+    let window_width = window.width()/2.0;
+    let window_height = window.height()/2.0;
     
     
 
@@ -125,21 +125,27 @@ fn sprite_control(mut sprite_position: Query<(&mut Transform, &mut SpriteType)>,
         if *sprite_type == SpriteType::Player {
             if keyboard_input.pressed(KeyCode::Left) {
                 transform.translation.x -= 10.0;
-                if transform.translation.x < 0.0 {
+                if transform.translation.x < -window_width {
                     transform.translation.x = window_width;
                 }
             }
             if keyboard_input.pressed(KeyCode::Right) {
                 transform.translation.x += 10.0;
                 if transform.translation.x > window_width {
-                    transform.translation.x = 0.0;
+                    transform.translation.x = -window_width;
                 }
             }
             if keyboard_input.pressed(KeyCode::Down) {
                 transform.translation.y -= 10.0;
+                if transform.translation.y < -window_height{
+                    transform.translation.y = window_height;
+                }
             }
             if keyboard_input.pressed(KeyCode::Up) {
-                transform.translation.y += 10.0
+                transform.translation.y += 10.0;
+                if transform.translation.y > window_height {
+                    transform.translation.y = -window_height;
+                }
             }
         }
 
