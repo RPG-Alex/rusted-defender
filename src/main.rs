@@ -156,7 +156,7 @@ fn sprite_control(mut sprite_position: Query<(&mut Transform, &mut SpriteType)>,
 
 // First version of simple function for detecting collisions, under construction.
 // This is really messy and I"m not sure I fully understand why its working
-fn sprites_collide(mut sprite_position: Query<(&mut Transform, &SpriteType, &Sprite)>) {
+fn sprites_collide(mut sprite_position: Query<(&mut Transform, &SpriteType, &Sprite)>,mut windows: Query<&mut Window>) {
     let mut player_position: Option<Transform> = None;
     let mut enemy_position: Option<Transform> = None;
     let mut player_size: Option<Vec2> = None;
@@ -178,16 +178,22 @@ fn sprites_collide(mut sprite_position: Query<(&mut Transform, &SpriteType, &Spr
     }
 
     if let (Some(player_pos), Some(player_s), Some(enemy_pos), Some(enemy_s)) = (player_position, player_size, enemy_position, enemy_size){
-        let player_min = player_pos.translation.truncate() - player_s / 2.0;
-        let player_max = player_pos.translation.truncate() + player_s / 2.0;
+        let player_min = player_pos.translation.truncate() - player_s / 3.0;
+        let player_max = player_pos.translation.truncate() + player_s / 3.0;
 
-        let enemy_min = enemy_pos.translation.truncate() - enemy_s / 2.0;
-        let enemy_max = enemy_pos.translation.truncate() + enemy_s / 2.0;
+        let enemy_min = enemy_pos.translation.truncate() - enemy_s / 3.0;
+        let enemy_max = enemy_pos.translation.truncate() + enemy_s / 3.0;
 
         if aabb_collision(player_min, player_max, enemy_min, enemy_max) {
             for (mut transform, sprite_type, _) in sprite_position.iter_mut(){
                 if *sprite_type == SpriteType::Player {
-                    transform.translation = Vec3::new(0.0, 0.0, transform.translation.z);
+                    
+                    //using this two places. This needs to be made into a function I can call
+                    let window = windows.single_mut();
+                    let window_width = window.width()/2.0;
+                    let window_height = window.height()/2.0;
+                        
+                    transform.translation = Vec3::new(window_width, window_height, transform.translation.z);
                 }
             }
         }
