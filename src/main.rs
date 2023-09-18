@@ -1,7 +1,7 @@
 //Import the necessary bevy features
 use bevy::{
     prelude::*, 
-    audio,
+    audio, sprite::collide_aabb, math::Vec3Swizzles,
 };
 
 
@@ -10,7 +10,7 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_systems(Startup, setup)
-        .add_systems(Update, (sprite_auto_movement,sprite_control, sprites_collide))
+        .add_systems(Update, (sprite_auto_movement,sprite_control, sprites_collide,bevy::window::close_on_esc))
         .run();
 }
 
@@ -32,6 +32,13 @@ enum Direction {
     Down,
     Left,
     Right,
+}
+
+//creats a struct for the player
+#[derive(Component, PartialEq)]
+enum Player{
+   Left,
+   Right, 
 }
 
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -56,10 +63,10 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 custom_size: Some(Vec2::new(200.0, 200.0)),
                 ..default()
             },
-            texture: asset_server.load("sprites/mech-sprite.png"),
+            texture: asset_server.load("sprites/rusted-avenger.png"),
             transform: Transform::from_xyz(-200.0, -200., 0.),
             ..default()
-        },
+        },Player::Left
     )).insert(SpriteType::Player);
     //enemy sprite
     commands.spawn((
@@ -86,6 +93,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 
 /// The sprite is animated by changing its translation depending on the time that has passed since
 /// the last frame.
+/// //disabling function for time being
 fn sprite_auto_movement(time: Res<Time>, mut sprite_position: Query<(&mut Direction, &mut Transform)>) {
     for (mut sprite, mut transform) in &mut sprite_position {
         match *sprite {
@@ -113,23 +121,33 @@ fn sprite_auto_movement(time: Res<Time>, mut sprite_position: Query<(&mut Direct
 }
 
 ///Function used for passing user inputs to contrl sprite(s)
-fn sprite_control(mut sprite_position: Query<(&mut Transform, &mut SpriteType)>, keyboard_input: Res<Input<KeyCode>>, mut windows: Query<&mut Window>){
+fn sprite_control(mut sprite_position: Query<(&mut Transform, &mut SpriteType, &mut Player)>, keyboard_input: Res<Input<KeyCode>>, mut windows: Query<&mut Window>){
     //Adding logic for detecting window size (probably won't live here long term)
     let window = windows.single_mut();
     let window_width = window.width()/2.0;
     let window_height = window.height()/2.0;
-    
+   
     
 
-    for (mut transform, sprite_type) in &mut sprite_position {
+    for (mut transform, sprite_type, mut player) in &mut sprite_position {
         if *sprite_type == SpriteType::Player {
+            
             if keyboard_input.pressed(KeyCode::Left) {
+                if *player == Player::Left{
+                    transform.rotate_y(3.14159);
+                    *player = Player::Right;
+                }
                 transform.translation.x -= 10.0;
                 if transform.translation.x < -window_width {
                     transform.translation.x = window_width;
                 }
             }
-            if keyboard_input.pressed(KeyCode::Right) {
+            if keyboard_input.pressed(KeyCode::Right) {    
+                if *player == Player::Right{
+                    transform.rotate_y(3.14159);
+                    *player = Player::Left;
+                }
+
                 transform.translation.x += 10.0;
                 if transform.translation.x > window_width {
                     transform.translation.x = -window_width;
@@ -184,6 +202,7 @@ fn sprites_collide(mut sprite_position: Query<(&mut Transform, &SpriteType, &Spr
         let enemy_min = enemy_pos.translation.truncate() - enemy_s / 3.0;
         let enemy_max = enemy_pos.translation.truncate() + enemy_s / 3.0;
 
+        
         if aabb_collision(player_min, player_max, enemy_min, enemy_max) {
             for (mut transform, sprite_type, _) in sprite_position.iter_mut(){
                 if *sprite_type == SpriteType::Player {
