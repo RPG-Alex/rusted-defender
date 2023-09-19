@@ -15,30 +15,22 @@ fn main() {
 }
 
 
-
 ///Create enum for distinguishing between sprites
 #[derive(Component, PartialEq)]
 enum SpriteType {
     Player, 
     Enemy,
     Background,
-}
-
-
-///enum for defining direction (Cardinal style)
-#[derive(Component)]
-enum Direction {
-    Up,
-    Down,
-    Left,
-    Right,
+    Projectile,
 }
 
 //creats a struct for the player
 #[derive(Component, PartialEq)]
-enum Player{
+enum Direction{
    Left,
-   Right, 
+   Right,
+   Up,
+   Down,
 }
 
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -66,8 +58,22 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             texture: asset_server.load("sprites/rusted-avenger.png"),
             transform: Transform::from_xyz(-200.0, -200., 0.),
             ..default()
-        },Player::Left
+        },Direction::Left
     )).insert(SpriteType::Player);
+
+    //player fireball
+    commands.spawn((
+        SpriteBundle{
+            sprite: Sprite {
+                custom_size: Some(Vec2::new(50.0,50.0)),
+                ..default()
+        },
+        texture: asset_server.load("objects/rusty-fireball.png"),
+        transform: Transform::from_xyz(-200.0, -200., 0.),
+        visibility: Visibility::Visible,
+        ..default()
+    })).insert(SpriteType::Projectile);
+
     //enemy sprite
     commands.spawn((
         SpriteBundle {
@@ -94,34 +100,36 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 /// The sprite is animated by changing its translation depending on the time that has passed since
 /// the last frame.
 /// //disabling function for time being
-fn sprite_auto_movement(time: Res<Time>, mut sprite_position: Query<(&mut Direction, &mut Transform)>) {
-    for (mut sprite, mut transform) in &mut sprite_position {
-        match *sprite {
-            Direction::Up => transform.translation.y += 150. * time.delta_seconds(),
-            Direction::Down => transform.translation.y -= 150. * time.delta_seconds(),
-            Direction::Right => transform.translation.x += 150. * time.delta_seconds(),
-            Direction::Left => transform.translation.x -= 150. * time.delta_seconds(),
-        }
-
-        // Check the boundaries and update the direction
-        match *sprite {
-            Direction::Up if transform.translation.y >= 200. => *sprite = Direction::Right,
-            Direction::Right if transform.translation.x >= 200. => *sprite = Direction::Down,
-            Direction::Down if transform.translation.y <= -200. => *sprite = Direction::Left,
-            Direction::Left if transform.translation.x <= -200. => *sprite = Direction::Up,
-            _ => {}
+fn sprite_auto_movement(time: Res<Time>, mut sprite_position: Query<(&mut Direction, &mut Transform, &SpriteType)>) {
+    for (mut sprite, mut transform, sprite_type) in &mut sprite_position {
+        //checks firs for the enemy enum
+        if *sprite_type == SpriteType::Enemy {
+            match *sprite {
+                Direction::Up => transform.translation.y += 150. * time.delta_seconds(),
+                Direction::Down => transform.translation.y -= 150. * time.delta_seconds(),
+                Direction::Right => transform.translation.x += 150. * time.delta_seconds(),
+                Direction::Left => transform.translation.x -= 150. * time.delta_seconds(),
+            }
+    
+            // Check the boundaries and update the direction
+            match *sprite {
+                Direction::Up if transform.translation.y >= 200. => *sprite = Direction::Right,
+                Direction::Right if transform.translation.x >= 200. => *sprite = Direction::Down,
+                Direction::Down if transform.translation.y <= -200. => *sprite = Direction::Left,
+                Direction::Left if transform.translation.x <= -200. => *sprite = Direction::Up,
+                _ => {}
+            }
         }
         
         //println!("{:?}", transform);
 
-        
-
+    
     }
     
 }
 
 ///Function used for passing user inputs to contrl sprite(s)
-fn sprite_control(mut sprite_position: Query<(&mut Transform, &mut SpriteType, &mut Player)>, keyboard_input: Res<Input<KeyCode>>, mut windows: Query<&mut Window>){
+fn sprite_control(mut sprite_position: Query<(&mut Transform, &SpriteType, &mut Direction, &mut Visibility)>, keyboard_input: Res<Input<KeyCode>>, mut windows: Query<&mut Window>){
     //Adding logic for detecting window size (probably won't live here long term)
     let window = windows.single_mut();
     let window_width = window.width()/2.0;
@@ -129,13 +137,14 @@ fn sprite_control(mut sprite_position: Query<(&mut Transform, &mut SpriteType, &
    
     
 
-    for (mut transform, sprite_type, mut player) in &mut sprite_position {
-        if *sprite_type == SpriteType::Player {
+    for (mut transform, sprite_type, mut direction, mut visibility) in &mut sprite_position {
+        //Define Player Movement
+        if sprite_type == &SpriteType::Player {
             
             if keyboard_input.pressed(KeyCode::Left) {
-                if *player == Player::Left{
+                if *direction == Direction::Left{
                     transform.rotate_y(3.14159);
-                    *player = Player::Right;
+                    *direction = Direction::Right;
                 }
                 transform.translation.x -= 10.0;
                 if transform.translation.x < -window_width {
@@ -143,9 +152,9 @@ fn sprite_control(mut sprite_position: Query<(&mut Transform, &mut SpriteType, &
                 }
             }
             if keyboard_input.pressed(KeyCode::Right) {    
-                if *player == Player::Right{
+                if *direction == Direction::Right{
                     transform.rotate_y(3.14159);
-                    *player = Player::Left;
+                    *direction = Direction::Left;
                 }
 
                 transform.translation.x += 10.0;
@@ -166,7 +175,12 @@ fn sprite_control(mut sprite_position: Query<(&mut Transform, &mut SpriteType, &
                 }
             }
         }
-
+        //this is not working yet. Need to figure out issue
+        if keyboard_input.pressed(KeyCode::Space) && sprite_type == &SpriteType::Projectile {
+                println!("Detected we are a projectile");
+                transform.translation.x -= 10.0;
+                transform.translation.y += 200.0;
+        }
     }
 
 }
