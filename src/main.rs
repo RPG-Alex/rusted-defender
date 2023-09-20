@@ -1,7 +1,7 @@
 //Import the necessary bevy features
 use bevy::{
     prelude::*, 
-    audio, sprite::collide_aabb, math::Vec3Swizzles,
+    audio,
 };
 
 
@@ -25,7 +25,7 @@ enum SpriteType {
 }
 
 //creats a struct for the player
-#[derive(Component, PartialEq)]
+#[derive(Component, Clone, Copy, PartialEq)]
 enum Direction{
    Left,
    Right,
@@ -70,9 +70,9 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         },
         texture: asset_server.load("objects/rusty-fireball.png"),
         transform: Transform::from_xyz(-200.0, -200., 0.),
-        visibility: Visibility::Visible,
+        visibility: Visibility::Hidden,
         ..default()
-    })).insert(SpriteType::Projectile);
+    }, Direction::Right)).insert(SpriteType::Projectile);
 
     //enemy sprite
     commands.spawn((
@@ -102,8 +102,9 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 /// //disabling function for time being
 fn sprite_auto_movement(time: Res<Time>, mut sprite_position: Query<(&mut Direction, &mut Transform, &SpriteType)>) {
     for (mut sprite, mut transform, sprite_type) in &mut sprite_position {
-        //checks firs for the enemy enum
+        //checks first for the enemy enum
         if *sprite_type == SpriteType::Enemy {
+            //This logic will need to be changed. Probably need to add randomness, and modify or split enum. It is messing up projectile.
             match *sprite {
                 Direction::Up => transform.translation.y += 150. * time.delta_seconds(),
                 Direction::Down => transform.translation.y -= 150. * time.delta_seconds(),
@@ -120,8 +121,15 @@ fn sprite_auto_movement(time: Res<Time>, mut sprite_position: Query<(&mut Direct
                 _ => {}
             }
         }
-        
-        //println!("{:?}", transform);
+        //This works to fire but for some reason directions are not sorted. And likely will not have an Up Down. I may need to redo the enum
+        if *sprite_type == SpriteType::Projectile {
+            match *sprite {
+                Direction::Left => transform.translation.x -= 500. * time.delta_seconds(),
+                Direction::Right => transform.translation.x += 500. * time.delta_seconds(),
+                Direction::Up => transform.translation.y += 500. * time.delta_seconds(),
+                Direction::Down => transform.translation.y -= 500. * time.delta_seconds(),
+            }
+        }
 
     
     }
@@ -134,13 +142,17 @@ fn sprite_control(mut sprite_position: Query<(&mut Transform, &SpriteType, &mut 
     let window = windows.single_mut();
     let window_width = window.width()/2.0;
     let window_height = window.height()/2.0;
-   
     
+    let mut player_position = Vec3::default();
+    let mut player_direction = Direction::Left;
 
-    for (mut transform, sprite_type, mut direction, mut visibility) in &mut sprite_position {
-        //Define Player Movement
-        if sprite_type == &SpriteType::Player {
-            
+   
+
+    for (mut transform, sprite_type, mut direction, _) in sprite_position.iter_mut() {
+        if *sprite_type == SpriteType::Player {
+            player_position = transform.translation;
+            player_direction = *direction;
+
             if keyboard_input.pressed(KeyCode::Left) {
                 if *direction == Direction::Left{
                     transform.rotate_y(3.14159);
@@ -174,12 +186,27 @@ fn sprite_control(mut sprite_position: Query<(&mut Transform, &SpriteType, &mut 
                     transform.translation.y = -window_height;
                 }
             }
-        }
-        //this is not working yet. Need to figure out issue
-        if keyboard_input.pressed(KeyCode::Space) && sprite_type == &SpriteType::Projectile {
-                println!("Detected we are a projectile");
-                transform.translation.x -= 10.0;
-                transform.translation.y += 200.0;
+            
+        }   
+    }
+
+    for (mut transform, sprite_type, direction, mut visibility) in sprite_position.iter_mut() {
+        if *sprite_type == SpriteType::Projectile {
+            if keyboard_input.just_pressed(KeyCode::Space) {
+                print!("This works");
+                // Make the projectile visible and set its position to the player's position
+                *visibility = Visibility::Visible;
+                // Switch projectile direction as needed (still buggy)
+                if player_direction == *direction {
+                    transform.rotate_y(3.14159);
+                }
+
+                // Set the projectile at player center and up by 20 (matching his weapon height)
+                transform.translation = player_position;
+                transform.translation.y += 20.0;
+                
+
+            }
         }
     }
 
