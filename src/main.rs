@@ -124,8 +124,8 @@ fn sprite_auto_movement(time: Res<Time>, mut sprite_position: Query<(&mut Direct
         //This works to fire but for some reason directions are not sorted. And likely will not have an Up Down. I may need to redo the enum
         if *sprite_type == SpriteType::Projectile {
             match *sprite {
-                Direction::Left => transform.translation.x -= 500. * time.delta_seconds(),
-                Direction::Right => transform.translation.x += 500. * time.delta_seconds(),
+                Direction::Right => transform.translation.x -= 500. * time.delta_seconds(),
+                Direction::Left => transform.translation.x += 500. * time.delta_seconds(),
                 Direction::Up => transform.translation.y += 500. * time.delta_seconds(),
                 Direction::Down => transform.translation.y -= 500. * time.delta_seconds(),
             }
@@ -190,20 +190,25 @@ fn sprite_control(mut sprite_position: Query<(&mut Transform, &SpriteType, &mut 
         }   
     }
 
-    for (mut transform, sprite_type, direction, mut visibility) in sprite_position.iter_mut() {
+    for (mut transform, sprite_type, mut direction, mut visibility) in sprite_position.iter_mut() {
         if *sprite_type == SpriteType::Projectile {
-            if keyboard_input.just_pressed(KeyCode::Space) {
-                print!("This works");
+            if keyboard_input.pressed(KeyCode::Space) {
                 // Make the projectile visible and set its position to the player's position
                 *visibility = Visibility::Visible;
                 // Switch projectile direction as needed (still buggy)
-                if player_direction == *direction {
+                if player_direction == Direction::Left ||  player_direction == Direction::Right {
+                    *direction = player_direction;
                     transform.rotate_y(3.14159);
                 }
 
                 // Set the projectile at player center and up by 20 (matching his weapon height)
                 transform.translation = player_position;
                 transform.translation.y += 20.0;
+                if player_direction == Direction::Right {
+                    transform.translation.x -= 100.0;
+                } else {
+                    transform.translation.x += 100.0;
+                }
                 
 
             }
@@ -290,13 +295,13 @@ fn sprites_collide(mut sprite_position: Query<(&mut Transform, &SpriteType, &Spr
 
 // aabb_collision function (probably bevy has something better for collision)
 fn aabb_collision(
-    min_a: Vec2, max_a: Vec2,
-    min_b: Vec2, max_b: Vec2
-) -> bool {
-    if min_a.x > max_b.x || max_a.x < min_b.x {
-        return false;
-    } if min_a.y > max_b.y || max_a.y < min_b.y {
-        return false;
-    }
-    true
+        min_a: Vec2, max_a: Vec2,
+        min_b: Vec2, max_b: Vec2
+    ) -> bool {
+        if min_a.x > max_b.x || max_a.x < min_b.x {
+            return false;
+        } if min_a.y > max_b.y || max_a.y < min_b.y {
+            return false;
+        }
+        true
 }
