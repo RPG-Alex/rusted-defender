@@ -5,6 +5,15 @@ use bevy::{
 };
 
 
+//Constants for the game
+const SPRITE_SIZE: Vec2 = Vec2::new(200.0,200.0);
+const PROJECTILE_SIZE: Vec2 = Vec2::new(50.0, 50.0);
+//  Movement Speed might change depending on game values
+const MOVEMENT_SPEED: f32 = 10.0;
+//  Projectile speed might change depending on game feedback
+const PROJECTILE_SPEED: f32 = 500.0;
+
+
 
 fn main() {
     App::new()
@@ -33,26 +42,26 @@ enum Direction{
    Down,
 }
 
-fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn setup(mut commands: Commands, asset_server: Res<AssetServer>, windows: Query<&mut Window>) {
     commands.spawn(Camera2dBundle::default());
-
+    
     // Adding the background
-    commands.spawn(SpriteBundle {
+    commands.spawn((SpriteBundle {
         sprite: Sprite {
             // This sets the background image size. Not dynamic. Needs to be changed to adjust to viewport size
-            custom_size: Some(Vec2::new(1920.0, 1080.0)),
+            custom_size: Some(Vec2::new(100.0,100.0)),
             ..default()
         },
         texture: asset_server.load("backgrounds/rusted-defender-home-screen.png"),
         transform: Transform::from_xyz(0., 0., -10.), // Ensure Z-coordinate is behind other entities
-        ..default()
-    }).insert(SpriteType::Background);
+        ..default()}, Direction::Up
+    )).insert(SpriteType::Background);
     //player sprite
     commands.spawn((
         SpriteBundle {
             //Adjust Sprite Size
             sprite: Sprite {
-                custom_size: Some(Vec2::new(200.0, 200.0)),
+                custom_size: Some(SPRITE_SIZE),
                 ..default()
             },
             texture: asset_server.load("sprites/rusted-avenger.png"),
@@ -65,7 +74,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn((
         SpriteBundle{
             sprite: Sprite {
-                custom_size: Some(Vec2::new(50.0,50.0)),
+                custom_size: Some(PROJECTILE_SIZE),
                 ..default()
         },
         texture: asset_server.load("objects/rusty-fireball.png"),
@@ -79,7 +88,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         SpriteBundle {
             //Adjust Sprite Size
             sprite: Sprite {
-                custom_size: Some(Vec2::new(200.0, 200.0)),
+                custom_size: Some(SPRITE_SIZE),
                 ..default()
             },
             texture: asset_server.load("sprites/enemy-sprite-1.png"),
@@ -124,10 +133,10 @@ fn sprite_auto_movement(time: Res<Time>, mut sprite_position: Query<(&mut Direct
         //This works to fire but for some reason directions are not sorted. And likely will not have an Up Down. I may need to redo the enum
         if *sprite_type == SpriteType::Projectile {
             match *sprite {
-                Direction::Right => transform.translation.x -= 500. * time.delta_seconds(),
-                Direction::Left => transform.translation.x += 500. * time.delta_seconds(),
-                Direction::Up => transform.translation.y += 500. * time.delta_seconds(),
-                Direction::Down => transform.translation.y -= 500. * time.delta_seconds(),
+                Direction::Right => transform.translation.x -= PROJECTILE_SPEED * time.delta_seconds(),
+                Direction::Left => transform.translation.x += PROJECTILE_SPEED * time.delta_seconds(),
+                Direction::Up => transform.translation.y += PROJECTILE_SPEED * time.delta_seconds(),
+                Direction::Down => transform.translation.y -= PROJECTILE_SPEED * time.delta_seconds(),
             }
         }
 
@@ -138,11 +147,10 @@ fn sprite_auto_movement(time: Res<Time>, mut sprite_position: Query<(&mut Direct
 
 ///Function used for passing user inputs to contrl sprite(s)
 fn sprite_control(mut sprite_position: Query<(&mut Transform, &SpriteType, &mut Direction, &mut Visibility)>, keyboard_input: Res<Input<KeyCode>>, mut windows: Query<&mut Window>){
-    //Adding logic for detecting window size (probably won't live here long term)
-    let window = windows.single_mut();
-    let window_width = window.width()/2.0;
-    let window_height = window.height()/2.0;
-    
+    // get window dimensions
+    let (window_width, window_height) = window_dimensions(&mut windows);
+
+
     let mut player_position = Vec3::default();
     let mut player_direction = Direction::Left;
 
@@ -158,7 +166,7 @@ fn sprite_control(mut sprite_position: Query<(&mut Transform, &SpriteType, &mut 
                     transform.rotate_y(3.14159);
                     *direction = Direction::Right;
                 }
-                transform.translation.x -= 10.0;
+                transform.translation.x -= MOVEMENT_SPEED;
                 if transform.translation.x < -window_width {
                     transform.translation.x = window_width;
                 }
@@ -169,25 +177,38 @@ fn sprite_control(mut sprite_position: Query<(&mut Transform, &SpriteType, &mut 
                     *direction = Direction::Left;
                 }
 
-                transform.translation.x += 10.0;
+                transform.translation.x += MOVEMENT_SPEED;
                 if transform.translation.x > window_width {
                     transform.translation.x = -window_width;
                 }
             }
             if keyboard_input.pressed(KeyCode::Down) {
-                transform.translation.y -= 10.0;
+                transform.translation.y -= MOVEMENT_SPEED;
                 if transform.translation.y < -window_height{
                     transform.translation.y = window_height;
                 }
             }
             if keyboard_input.pressed(KeyCode::Up) {
-                transform.translation.y += 10.0;
+                transform.translation.y += MOVEMENT_SPEED;
                 if transform.translation.y > window_height {
                     transform.translation.y = -window_height;
                 }
             }
             
-        }   
+        }  
+        if *sprite_type == SpriteType::Background {
+            print!("ermegersh it works");
+            // Calculate the scale factors, not sure why its 50.0
+            let sprite_original_width = 50.0; // adjust this based on your sprite's original size / 2 for some reason
+            let sprite_original_height = 50.0; // adjust this based on your sprite's original size / 2 for some reason
+    
+            let scale_x = window_width / sprite_original_width;
+            let scale_y = window_height / sprite_original_height;
+    
+            // Set the scale of the Transform component
+            transform.scale = Vec3::new(scale_x, scale_y, 1.0);
+        }
+        
     }
 
     for (mut transform, sprite_type, mut direction, mut visibility) in sprite_position.iter_mut() {
@@ -304,4 +325,10 @@ fn aabb_collision(
             return false;
         }
         true
+}
+
+//This function gets our window info (x,y dimensions)
+fn window_dimensions(windows: &mut Query<&mut Window>) -> (f32,f32) {
+    let window = windows.single_mut();
+    (window.width()/2.0, window.height()/2.0)
 }
