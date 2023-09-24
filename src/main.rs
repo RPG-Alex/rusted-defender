@@ -2,6 +2,7 @@
 use bevy::{
     prelude::*, 
     audio,
+    sprite::collide_aabb::collide,
 };
 
 
@@ -197,7 +198,6 @@ fn sprite_control(mut sprite_position: Query<(&mut Transform, &SpriteType, &mut 
             
         }  
         if *sprite_type == SpriteType::Background {
-            print!("ermegersh it works");
             // Calculate the scale factors, not sure why its 50.0
             let sprite_original_width = 50.0; // adjust this based on your sprite's original size / 2 for some reason
             let sprite_original_height = 50.0; // adjust this based on your sprite's original size / 2 for some reason
@@ -267,20 +267,12 @@ fn sprites_collide(mut sprite_position: Query<(&mut Transform, &SpriteType, &Spr
             _ => {}
         }
     }
-    //maybe this should be abstracted out into its own function as well. As this is going to get repeated... again
+
     if let (Some(player_pos), Some(player_s), Some(enemy_pos), Some(enemy_s)) = (player_position, player_size, enemy_position, enemy_size){
-        let player_min = player_pos.translation.truncate() - player_s / 3.0;
-        let player_max = player_pos.translation.truncate() + player_s / 3.0;
-
-        let enemy_min = enemy_pos.translation.truncate() - enemy_s / 3.0;
-        let enemy_max = enemy_pos.translation.truncate() + enemy_s / 3.0;
-
-        
-        if aabb_collision(player_min, player_max, enemy_min, enemy_max) {
+        let collision = collide(player_pos.translation, player_s / 2.0, enemy_pos.translation, enemy_s / 2.0);
+        if collision.is_some() {
             for (mut transform, sprite_type, _) in sprite_position.iter_mut(){
                 if *sprite_type == SpriteType::Player {
-                    
-                    //using this two places. This needs to be made into a function I can call
                     let window = windows.single_mut();
                     let window_width = window.width()/2.0;
                     let window_height = window.height()/2.0;
@@ -290,19 +282,12 @@ fn sprites_collide(mut sprite_position: Query<(&mut Transform, &SpriteType, &Spr
             }
         }
     }
+
     if let (Some(projectile_pos), Some(projectile_s), Some(enemy_pos), Some(enemy_s)) = (projectile_position, projectile_size, enemy_position, enemy_size){
-        let projectile_min = projectile_pos.translation.truncate() - projectile_s / 3.0;
-        let projectile_max = projectile_pos.translation.truncate() + projectile_s / 3.0;
-
-        let enemy_min = enemy_pos.translation.truncate() - enemy_s / 3.0;
-        let enemy_max = enemy_pos.translation.truncate() + enemy_s / 3.0;
-
-        
-        if aabb_collision(projectile_min, projectile_max, enemy_min, enemy_max) {
+        let collision = collide(projectile_pos.translation, projectile_s / 2.0, enemy_pos.translation, enemy_s / 2.0);
+        if collision.is_some() {
             for (mut transform, sprite_type, _) in sprite_position.iter_mut(){
                 if *sprite_type == SpriteType::Enemy {
-                    
-                    //using this two places. This needs to be made into a function I can call
                     let window = windows.single_mut();
                     let window_width = window.width()/2.0;
                     let window_height = window.height()/2.0;
@@ -314,18 +299,6 @@ fn sprites_collide(mut sprite_position: Query<(&mut Transform, &SpriteType, &Spr
     }
 }
 
-// aabb_collision function (probably bevy has something better for collision)
-fn aabb_collision(
-        min_a: Vec2, max_a: Vec2,
-        min_b: Vec2, max_b: Vec2
-    ) -> bool {
-        if min_a.x > max_b.x || max_a.x < min_b.x {
-            return false;
-        } if min_a.y > max_b.y || max_a.y < min_b.y {
-            return false;
-        }
-        true
-}
 
 //This function gets our window info (x,y dimensions)
 fn window_dimensions(windows: &mut Query<&mut Window>) -> (f32,f32) {
