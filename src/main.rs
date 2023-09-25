@@ -20,7 +20,7 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_systems(Startup, setup)
-        .add_systems(Update, (sprite_auto_movement,sprite_control, sprites_collide,bevy::window::close_on_esc))
+        .add_systems(Update, (sprite_auto_movement,sprite_control, sprites_collide,bevy::window::close_on_esc),)
         .run();
 }
 
@@ -44,6 +44,7 @@ enum Direction{
 }
 
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>, windows: Query<&mut Window>) {
+
     commands.spawn(Camera2dBundle::default());
     
     // Adding the background
@@ -157,7 +158,7 @@ fn sprite_control(mut sprite_position: Query<(&mut Transform, &SpriteType, &mut 
 
    
 
-    for (mut transform, sprite_type, mut direction, _) in sprite_position.iter_mut() {
+    for (mut transform, sprite_type, mut direction, mut visibility) in sprite_position.iter_mut() {
         if *sprite_type == SpriteType::Player {
             player_position = transform.translation;
             player_direction = *direction;
@@ -208,40 +209,43 @@ fn sprite_control(mut sprite_position: Query<(&mut Transform, &SpriteType, &mut 
             // Set the scale of the Transform component
             transform.scale = Vec3::new(scale_x, scale_y, 1.0);
         }
+            if *sprite_type == SpriteType::Projectile {
+                if keyboard_input.pressed(KeyCode::Space) {
+                    // Make the projectile visible and set its position to the player's position
+                    *visibility = Visibility::Visible;
+                    // Switch projectile direction as needed (still buggy)
+                    if player_direction == Direction::Left ||  player_direction == Direction::Right {
+                        *direction = player_direction;
+                        transform.rotate_y(3.14159);
+                    }
+
+                    // Set the projectile at player center and up by 20 (matching his weapon height)
+                    transform.translation = player_position;
+                    transform.translation.y += 20.0;
+                    if player_direction == Direction::Right {
+                        transform.translation.x -= 100.0;
+                    } else {
+                        transform.translation.x += 100.0;
+                    }
+                    
+
+                }
+        }
         
     }
-
-    for (mut transform, sprite_type, mut direction, mut visibility) in sprite_position.iter_mut() {
-        if *sprite_type == SpriteType::Projectile {
-            if keyboard_input.pressed(KeyCode::Space) {
-                // Make the projectile visible and set its position to the player's position
-                *visibility = Visibility::Visible;
-                // Switch projectile direction as needed (still buggy)
-                if player_direction == Direction::Left ||  player_direction == Direction::Right {
-                    *direction = player_direction;
-                    transform.rotate_y(3.14159);
-                }
-
-                // Set the projectile at player center and up by 20 (matching his weapon height)
-                transform.translation = player_position;
-                transform.translation.y += 20.0;
-                if player_direction == Direction::Right {
-                    transform.translation.x -= 100.0;
-                } else {
-                    transform.translation.x += 100.0;
-                }
-                
-
-            }
-        }
-    }
-
 }
 
+
+// Possible struct
+// struct SpriteAttributes {
+//     position: Option<Transform>,
+//     size: Option<Vec2>,
+// }
 
 // First version of simple function for detecting collisions, under construction.
 // This is really messy and I"m not sure I fully understand why its working
 fn sprites_collide(mut sprite_position: Query<(&mut Transform, &SpriteType, &Sprite)>,mut windows: Query<&mut Window>) {
+    // Here we instantiate positions and sizes. I think this should be a Struct
     let mut player_position: Option<Transform> = None;
     let mut enemy_position: Option<Transform> = None;
     let mut projectile_position: Option<Transform> = None;
@@ -269,7 +273,7 @@ fn sprites_collide(mut sprite_position: Query<(&mut Transform, &SpriteType, &Spr
     }
 
     if let (Some(player_pos), Some(player_s), Some(enemy_pos), Some(enemy_s)) = (player_position, player_size, enemy_position, enemy_size){
-        let collision = collide(player_pos.translation, player_s / 2.0, enemy_pos.translation, enemy_s / 2.0);
+        let collision = collide(player_pos.translation, player_s / 1.5, enemy_pos.translation, enemy_s / 1.5);
         if collision.is_some() {
             for (mut transform, sprite_type, _) in sprite_position.iter_mut(){
                 if *sprite_type == SpriteType::Player {
@@ -284,7 +288,7 @@ fn sprites_collide(mut sprite_position: Query<(&mut Transform, &SpriteType, &Spr
     }
 
     if let (Some(projectile_pos), Some(projectile_s), Some(enemy_pos), Some(enemy_s)) = (projectile_position, projectile_size, enemy_position, enemy_size){
-        let collision = collide(projectile_pos.translation, projectile_s / 2.0, enemy_pos.translation, enemy_s / 2.0);
+        let collision = collide(projectile_pos.translation, projectile_s, enemy_pos.translation, enemy_s);
         if collision.is_some() {
             for (mut transform, sprite_type, _) in sprite_position.iter_mut(){
                 if *sprite_type == SpriteType::Enemy {
