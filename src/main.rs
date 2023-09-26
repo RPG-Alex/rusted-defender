@@ -240,7 +240,7 @@ fn sprite_control(mut sprite_position: Query<(&mut Transform, &SpriteType, &mut 
                         transform.translation.x += 100.0;
                     }
                     
-
+                    
                 }
         }
         
