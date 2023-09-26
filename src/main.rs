@@ -4,15 +4,17 @@ use bevy::{
     audio,
     sprite::collide_aabb::collide,
 };
-
+use rand::prelude::*;
 
 //Constants for the game
 const SPRITE_SIZE: Vec2 = Vec2::new(200.0,200.0);
 const PROJECTILE_SIZE: Vec2 = Vec2::new(50.0, 50.0);
+//Charging projectil increases size
+const PROJECTILE_CHARGED_SIZE: Vec2 = Vec2::new(200.0, 200.0);
 //  Movement Speed might change depending on game values
 const MOVEMENT_SPEED: f32 = 10.0;
 //  Projectile speed might change depending on game feedback
-const PROJECTILE_SPEED: f32 = 500.0;
+const PROJECTILE_SPEED: f32 = 1500.0;
 
 
 
@@ -43,7 +45,7 @@ enum Direction{
    Down,
 }
 
-fn setup(mut commands: Commands, asset_server: Res<AssetServer>, windows: Query<&mut Window>) {
+fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     commands.spawn(Camera2dBundle::default());
     
@@ -112,9 +114,19 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>, windows: Query<
 /// the last frame.
 /// //disabling function for time being
 fn sprite_auto_movement(time: Res<Time>, mut sprite_position: Query<(&mut Direction, &mut Transform, &SpriteType)>) {
+    let mut rng = rand::thread_rng();
     for (mut sprite, mut transform, sprite_type) in &mut sprite_position {
         //checks first for the enemy enum
         if *sprite_type == SpriteType::Enemy {
+            //randomly change direction
+            match rng.gen_range(0..4) {
+                0 => {transform.translation.y += 250. * time.delta_seconds();},
+                1 => {transform.translation.y -= 250. * time.delta_seconds()},
+                2 => {transform.translation.x += 250. * time.delta_seconds()},
+                _ => {transform.translation.x -= 250. * time.delta_seconds()},
+            }
+
+
             //This logic will need to be changed. Probably need to add randomness, and modify or split enum. It is messing up projectile.
             match *sprite {
                 Direction::Up => transform.translation.y += 150. * time.delta_seconds(),
