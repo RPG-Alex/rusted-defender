@@ -248,11 +248,7 @@ fn sprite_control(mut sprite_position: Query<(&mut Transform, &SpriteType, &mut 
 }
 
 
-// Possible struct
-// struct SpriteAttributes {
-//     position: Option<Transform>,
-//     size: Option<Vec2>,
-// }
+
 
 // First version of simple function for detecting collisions, under construction.
 // This is really messy and I"m not sure I fully understand why its working
@@ -320,4 +316,22 @@ fn sprites_collide(mut sprite_position: Query<(&mut Transform, &SpriteType, &Spr
 fn window_dimensions(windows: &mut Query<&mut Window>) -> (f32,f32) {
     let window = windows.single_mut();
     (window.width()/2.0, window.height()/2.0)
+}
+
+
+//new function for spawning (and then despawning) projectiles -- under construction
+fn spawn_projectile(mut sprite_info: Query<(&mut Transform, &SpriteType, &mut Direction, &mut Visibility)>, keyboard_input: Res<Input<KeyCode>>, mut windows: Query<&mut Window>, mut commands: Commands, asset_server: Res<AssetServer>) {
+    //TODO: add logic to put fireball at correct location relative to player. Then have fireball despawn after leaving window
+        //player fireball
+        commands.spawn((
+            SpriteBundle{
+                sprite: Sprite {
+                    custom_size: Some(PROJECTILE_SIZE),
+                    ..default()
+            },
+            texture: asset_server.load("objects/rusty-fireball.png"),
+            transform: Transform::from_xyz(-200.0, -200., 0.),
+            visibility: Visibility::Visible,
+            ..default()
+        }, Direction::Right)).insert(SpriteType::Projectile);   
 }
