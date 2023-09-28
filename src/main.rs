@@ -56,7 +56,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             custom_size: Some(Vec2::new(100.0,100.0)),
             ..default()
         },
-        texture: asset_server.load("backgrounds/rusted-defender-home-screen.png"),
+        texture: asset_server.load("backgrounds/home-screen-background.png"),
         transform: Transform::from_xyz(0., 0., -10.), // Ensure Z-coordinate is behind other entities
         ..default()}, Direction::Up
     )).insert(SpriteType::Background);
@@ -320,7 +320,7 @@ fn window_dimensions(windows: &mut Query<&mut Window>) -> (f32,f32) {
 
 
 //new function for spawning (and then despawning) projectiles -- under construction
-fn spawn_projectile(mut sprite_info: Query<(&mut Transform, &SpriteType, &mut Direction, &mut Visibility)>, keyboard_input: Res<Input<KeyCode>>, mut windows: Query<&mut Window>, mut commands: Commands, asset_server: Res<AssetServer>) {
+fn spawn_projectile() {
     //TODO: add logic to put fireball at correct location relative to player. Then have fireball despawn after leaving window
         //player fireball
         commands.spawn((
@@ -335,3 +335,13 @@ fn spawn_projectile(mut sprite_info: Query<(&mut Transform, &SpriteType, &mut Di
             ..default()
         }, Direction::Right)).insert(SpriteType::Projectile);   
 }
+
+/*
+Possible Method for Spawning Projectiles:
+    When space is pressed, spawn a projectile at the appropriate position, and have it fire:
+        spawn_projectile:
+            - create a new projectile
+            - give it direction
+            - have it fire (moving) in that direction
+            - despawn projectile after leaving screen -- This requires passing the screen info
+*/
