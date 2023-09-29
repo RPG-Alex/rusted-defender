@@ -22,7 +22,7 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_systems(Startup, setup)
-        .add_systems(Update, (sprite_auto_movement,sprite_control, sprites_collide,bevy::window::close_on_esc),)
+        .add_systems(Update, (sprite_auto_movement,sprite_control, sprites_collide, bevy::window::close_on_esc),)
         .run();
 }
 
@@ -56,7 +56,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             custom_size: Some(Vec2::new(100.0,100.0)),
             ..default()
         },
-        texture: asset_server.load("backgrounds/home-screen-background.png"),
+        texture: asset_server.load("backgrounds/home-screen-background-small.png"),
         transform: Transform::from_xyz(0., 0., -10.), // Ensure Z-coordinate is behind other entities
         ..default()}, Direction::Up
     )).insert(SpriteType::Background);
@@ -74,18 +74,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         },Direction::Left
     )).insert(SpriteType::Player);
 
-    //player fireball
-    commands.spawn((
-        SpriteBundle{
-            sprite: Sprite {
-                custom_size: Some(PROJECTILE_SIZE),
-                ..default()
-        },
-        texture: asset_server.load("objects/rusty-fireball.png"),
-        transform: Transform::from_xyz(-200.0, -200., 0.),
-        visibility: Visibility::Hidden,
-        ..default()
-    }, Direction::Right)).insert(SpriteType::Projectile);
+   
 
     //enemy sprite
     commands.spawn((
@@ -113,7 +102,11 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 /// The sprite is animated by changing its translation depending on the time that has passed since
 /// the last frame.
 /// //disabling function for time being
-fn sprite_auto_movement(time: Res<Time>, mut sprite_position: Query<(&mut Direction, &mut Transform, &SpriteType)>) {
+fn sprite_auto_movement(
+    time: Res<Time>, 
+    mut sprite_position: Query<(&mut Direction, 
+        &mut Transform, &SpriteType)>
+    ) {
     let mut rng = rand::thread_rng();
     for (mut sprite, mut transform, sprite_type) in &mut sprite_position {
         //checks first for the enemy enum
@@ -144,15 +137,6 @@ fn sprite_auto_movement(time: Res<Time>, mut sprite_position: Query<(&mut Direct
                 _ => {}
             }
         }
-        //This works to fire but for some reason directions are not sorted. And likely will not have an Up Down. I may need to redo the enum
-        if *sprite_type == SpriteType::Projectile {
-            match *sprite {
-                Direction::Right => transform.translation.x -= PROJECTILE_SPEED * time.delta_seconds(),
-                Direction::Left => transform.translation.x += PROJECTILE_SPEED * time.delta_seconds(),
-                Direction::Up => transform.translation.y += PROJECTILE_SPEED * time.delta_seconds(),
-                Direction::Down => transform.translation.y -= PROJECTILE_SPEED * time.delta_seconds(),
-            }
-        }
 
     
     }
@@ -160,7 +144,13 @@ fn sprite_auto_movement(time: Res<Time>, mut sprite_position: Query<(&mut Direct
 }
 
 ///Function used for passing user inputs to contrl sprite(s)
-fn sprite_control(mut sprite_position: Query<(&mut Transform, &SpriteType, &mut Direction, &mut Visibility)>, keyboard_input: Res<Input<KeyCode>>, mut windows: Query<&mut Window>){
+fn sprite_control(
+    mut commands: Commands,
+    mut sprite_position: Query<(Entity, &mut Transform, &SpriteType, &mut Direction)>, keyboard_input: Res<Input<KeyCode>>, 
+    mut windows: Query<&mut Window>,
+    asset_server: Res<AssetServer>,
+    time: Res<Time>,
+){
     // get window dimensions
     let (window_width, window_height) = window_dimensions(&mut windows);
 
@@ -170,13 +160,14 @@ fn sprite_control(mut sprite_position: Query<(&mut Transform, &SpriteType, &mut 
 
    
 
-    for (mut transform, sprite_type, mut direction, mut visibility) in sprite_position.iter_mut() {
+    for (entity, mut transform, sprite_type, mut direction) in sprite_position.iter_mut() {
         if *sprite_type == SpriteType::Player {
             player_position = transform.translation;
             player_direction = *direction;
 
             if keyboard_input.pressed(KeyCode::Left) {
                 if *direction == Direction::Left{
+                    println!("Player moved left to: {:?}", transform.translation);
                     transform.rotate_y(3.14159);
                     *direction = Direction::Right;
                 }
@@ -221,30 +212,53 @@ fn sprite_control(mut sprite_position: Query<(&mut Transform, &SpriteType, &mut 
             // Set the scale of the Transform component
             transform.scale = Vec3::new(scale_x, scale_y, 1.0);
         }
-            if *sprite_type == SpriteType::Projectile {
-                if keyboard_input.pressed(KeyCode::Space) {
-                    // Make the projectile visible and set its position to the player's position
-                    *visibility = Visibility::Visible;
-                    // Switch projectile direction as needed (still buggy)
-                    if player_direction == Direction::Left ||  player_direction == Direction::Right {
-                        *direction = player_direction;
-                        transform.rotate_y(3.14159);
-                    }
 
-                    // Set the projectile at player center and up by 20 (matching his weapon height)
-                    transform.translation = player_position;
-                    transform.translation.y += 20.0;
-                    if player_direction == Direction::Right {
-                        transform.translation.x -= 100.0;
-                    } else {
-                        transform.translation.x += 100.0;
+        if *sprite_type == SpriteType::Projectile {
+            match *direction {
+                Direction::Right => {
+                    transform.translation.x += PROJECTILE_SPEED * time.delta_seconds(); // Move to the right
+                    if transform.translation.x > window_width {
+                        commands.entity(entity).despawn();
                     }
-                    
-                    
+                },
+                Direction::Left => {
+                    transform.translation.x -= PROJECTILE_SPEED * time.delta_seconds(); // Move to the left
+                    if transform.translation.x < -window_width {
+                        commands.entity(entity).despawn();
+                    }
                 }
+                Direction::Up => transform.translation.y += PROJECTILE_SPEED * time.delta_seconds(),
+                Direction::Down => transform.translation.y -= PROJECTILE_SPEED * time.delta_seconds(),
+            }
+            
         }
-        
     }
+
+    // not sure this is necessary to put into its own loop. May need to make a whole separate function for the projectile system and seperate it from the player control system. The projectils are not properly spawning at player location now.
+    for (entity, mut transform, sprite_type, mut direction) in sprite_position.iter_mut() {
+        if sprite_type == &SpriteType::Player {
+            let player_position = transform.translation;
+            let player_direction = *direction;
+        }
+            
+
+        if keyboard_input.just_pressed(KeyCode::Space) {
+            println!("Player position when firing: {:?}", player_position); // Debug print
+            commands
+            .spawn(SpriteBundle{
+                sprite: Sprite {
+                    custom_size: Some(PROJECTILE_SIZE),
+                    ..Default::default()
+                },
+                texture: asset_server.load("objects/rusty-fireball.png"),
+                transform: Transform::from_xyz(player_position.x, player_position.y + 20.0, 5.0),
+                ..Default::default()
+            })
+            .insert(player_direction)
+            .insert(SpriteType::Projectile);
+        }
+    }
+
 }
 
 
@@ -317,31 +331,3 @@ fn window_dimensions(windows: &mut Query<&mut Window>) -> (f32,f32) {
     let window = windows.single_mut();
     (window.width()/2.0, window.height()/2.0)
 }
-
-
-//new function for spawning (and then despawning) projectiles -- under construction
-fn spawn_projectile() {
-    //TODO: add logic to put fireball at correct location relative to player. Then have fireball despawn after leaving window
-        //player fireball
-        commands.spawn((
-            SpriteBundle{
-                sprite: Sprite {
-                    custom_size: Some(PROJECTILE_SIZE),
-                    ..default()
-            },
-            texture: asset_server.load("objects/rusty-fireball.png"),
-            transform: Transform::from_xyz(-200.0, -200., 0.),
-            visibility: Visibility::Visible,
-            ..default()
-        }, Direction::Right)).insert(SpriteType::Projectile);   
-}
-
-/*
-Possible Method for Spawning Projectiles:
-    When space is pressed, spawn a projectile at the appropriate position, and have it fire:
-        spawn_projectile:
-            - create a new projectile
-            - give it direction
-            - have it fire (moving) in that direction
-            - despawn projectile after leaving screen -- This requires passing the screen info
-*/
