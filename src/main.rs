@@ -331,3 +331,49 @@ fn window_dimensions(windows: &mut Query<&mut Window>) -> (f32,f32) {
     let window = windows.single_mut();
     (window.width()/2.0, window.height()/2.0)
 }
+
+//Function to seperate the proejctile logic
+fn fire_projectile(
+    mut commands: Commands,
+    mut sprite: Query<(Entity, &mut Transform, &SpriteType, &mut Direction)>, keyboard_input: Res<Input<KeyCode>>, 
+    mut windows: Query<&mut Window>,
+    asset_server: Res<AssetServer>,
+    time: Res<Time>,
+    player_position: Transform,
+    player_direction: Direction,
+) {
+    //Will need to get player position 
+    //  then use it to spawn projectil at right location. 
+    commands
+    .spawn(SpriteBundle{
+        sprite: Sprite {
+            custom_size: Some(PROJECTILE_SIZE),
+            ..Default::default()
+        },
+        texture: asset_server.load("objects/rusty-fireball.png"),
+        transform: Transform::from_xyz(player_position.translation.x, player_position.translation.y + 20.0, 5.0),
+        ..Default::default()
+    })
+    .insert(player_direction)
+    .insert(SpriteType::Projectile);
+
+    if *sprite_type == SpriteType::Projectile {
+        match *direction {
+            Direction::Right => {
+                transform.translation.x += PROJECTILE_SPEED * time.delta_seconds(); // Move to the right
+                if transform.translation.x > window_width {
+                    commands.entity(entity).despawn();
+                }
+            },
+            Direction::Left => {
+                transform.translation.x -= PROJECTILE_SPEED * time.delta_seconds(); // Move to the left
+                if transform.translation.x < -window_width {
+                    commands.entity(entity).despawn();
+                }
+            }
+            Direction::Up => transform.translation.y += PROJECTILE_SPEED * time.delta_seconds(),
+            Direction::Down => transform.translation.y -= PROJECTILE_SPEED * time.delta_seconds(),
+        }
+        
+    }
+}
