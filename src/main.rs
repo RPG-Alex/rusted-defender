@@ -158,8 +158,6 @@ fn sprite_control(
     let mut player_position = Vec3::default();
     let mut player_direction = Direction::Left;
 
-   
-
     for (entity, mut transform, sprite_type, mut direction) in sprite_position.iter_mut() {
         if *sprite_type == SpriteType::Player {
             player_position = transform.translation;
@@ -199,6 +197,11 @@ fn sprite_control(
                     transform.translation.y = -window_height;
                 }
             }
+
+            //not working yet may need to place elsewhere
+            if keyboard_input.pressed(KeyCode::Space){
+                fire_projectile(commands, sprite_position, keyboard_input, windows, asset_server, time, *transform, player_direction);        
+            }
             
         }  
         if *sprite_type == SpriteType::Background {
@@ -213,25 +216,25 @@ fn sprite_control(
             transform.scale = Vec3::new(scale_x, scale_y, 1.0);
         }
 
-        if *sprite_type == SpriteType::Projectile {
-            match *direction {
-                Direction::Right => {
-                    transform.translation.x += PROJECTILE_SPEED * time.delta_seconds(); // Move to the right
-                    if transform.translation.x > window_width {
-                        commands.entity(entity).despawn();
-                    }
-                },
-                Direction::Left => {
-                    transform.translation.x -= PROJECTILE_SPEED * time.delta_seconds(); // Move to the left
-                    if transform.translation.x < -window_width {
-                        commands.entity(entity).despawn();
-                    }
-                }
-                Direction::Up => transform.translation.y += PROJECTILE_SPEED * time.delta_seconds(),
-                Direction::Down => transform.translation.y -= PROJECTILE_SPEED * time.delta_seconds(),
-            }
+        // if *sprite_type == SpriteType::Projectile {
+        //     match *direction {
+        //         Direction::Right => {
+        //             transform.translation.x += PROJECTILE_SPEED * time.delta_seconds(); // Move to the right
+        //             if transform.translation.x > window_width {
+        //                 commands.entity(entity).despawn();
+        //             }
+        //         },
+        //         Direction::Left => {
+        //             transform.translation.x -= PROJECTILE_SPEED * time.delta_seconds(); // Move to the left
+        //             if transform.translation.x < -window_width {
+        //                 commands.entity(entity).despawn();
+        //             }
+        //         }
+        //         Direction::Up => transform.translation.y += PROJECTILE_SPEED * time.delta_seconds(),
+        //         Direction::Down => transform.translation.y -= PROJECTILE_SPEED * time.delta_seconds(),
+        //     }
             
-        }
+        // }
     }
 
     // not sure this is necessary to put into its own loop. May need to make a whole separate function for the projectile system and seperate it from the player control system. The projectils are not properly spawning at player location now.
@@ -342,6 +345,8 @@ fn fire_projectile(
     player_position: Transform,
     player_direction: Direction,
 ) {
+
+    let (window_width, window_height) = window_dimensions(&mut windows);
     //Will need to get player position 
     //  then use it to spawn projectil at right location. 
     commands
@@ -356,24 +361,25 @@ fn fire_projectile(
     })
     .insert(player_direction)
     .insert(SpriteType::Projectile);
-
-    if *sprite_type == SpriteType::Projectile {
-        match *direction {
-            Direction::Right => {
-                transform.translation.x += PROJECTILE_SPEED * time.delta_seconds(); // Move to the right
-                if transform.translation.x > window_width {
-                    commands.entity(entity).despawn();
+    for (entity, transform, sprite_type, direction) in &sprite {
+        if *sprite_type == SpriteType::Projectile {
+            match *direction {
+                Direction::Right => {
+                    transform.translation.x += PROJECTILE_SPEED * time.delta_seconds(); // Move to the right
+                    if transform.translation.x > window_width {
+                        commands.entity(entity).despawn();
+                    }
+                },
+                Direction::Left => {
+                    transform.translation.x -= PROJECTILE_SPEED * time.delta_seconds(); // Move to the left
+                    if transform.translation.x < -window_width {
+                        commands.entity(entity).despawn();
+                    }
                 }
-            },
-            Direction::Left => {
-                transform.translation.x -= PROJECTILE_SPEED * time.delta_seconds(); // Move to the left
-                if transform.translation.x < -window_width {
-                    commands.entity(entity).despawn();
-                }
+                Direction::Up => transform.translation.y += PROJECTILE_SPEED * time.delta_seconds(),
+                Direction::Down => transform.translation.y -= PROJECTILE_SPEED * time.delta_seconds(),
             }
-            Direction::Up => transform.translation.y += PROJECTILE_SPEED * time.delta_seconds(),
-            Direction::Down => transform.translation.y -= PROJECTILE_SPEED * time.delta_seconds(),
-        }
-        
+            
+    }
     }
 }
