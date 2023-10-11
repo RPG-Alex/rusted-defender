@@ -159,6 +159,24 @@ fn sprite_control(
     let mut player_direction = Direction::Left;
 
     for (entity, mut transform, sprite_type, mut direction) in sprite_position.iter_mut() {
+        if *sprite_type == SpriteType::Projectile {
+            match *direction {
+                Direction::Right => {
+                    transform.translation.x += PROJECTILE_SPEED * time.delta_seconds(); // Move to the right
+                    if transform.translation.x > window_width {
+                        commands.entity(entity).despawn();
+                    }
+                },
+                Direction::Left => {
+                    transform.translation.x -= PROJECTILE_SPEED * time.delta_seconds(); // Move to the left
+                    if transform.translation.x < -window_width {
+                        commands.entity(entity).despawn();
+                    }
+                }
+                Direction::Up => transform.translation.y += PROJECTILE_SPEED * time.delta_seconds(),
+                Direction::Down => transform.translation.y -= PROJECTILE_SPEED * time.delta_seconds(),
+            }
+        }
         if *sprite_type == SpriteType::Player {
             player_position = transform.translation;
             player_direction = *direction;
@@ -200,7 +218,7 @@ fn sprite_control(
 
             //not working yet may need to place elsewhere
             if keyboard_input.pressed(KeyCode::Space){
-                fire_projectile(commands, sprite_position, keyboard_input, windows, asset_server, time, *transform, player_direction);        
+                fire_projectile(&mut commands, &asset_server, &transform, player_direction);
             }
             
         }  
@@ -215,52 +233,8 @@ fn sprite_control(
             // Set the scale of the Transform component
             transform.scale = Vec3::new(scale_x, scale_y, 1.0);
         }
-
-        // if *sprite_type == SpriteType::Projectile {
-        //     match *direction {
-        //         Direction::Right => {
-        //             transform.translation.x += PROJECTILE_SPEED * time.delta_seconds(); // Move to the right
-        //             if transform.translation.x > window_width {
-        //                 commands.entity(entity).despawn();
-        //             }
-        //         },
-        //         Direction::Left => {
-        //             transform.translation.x -= PROJECTILE_SPEED * time.delta_seconds(); // Move to the left
-        //             if transform.translation.x < -window_width {
-        //                 commands.entity(entity).despawn();
-        //             }
-        //         }
-        //         Direction::Up => transform.translation.y += PROJECTILE_SPEED * time.delta_seconds(),
-        //         Direction::Down => transform.translation.y -= PROJECTILE_SPEED * time.delta_seconds(),
-        //     }
-            
-        // }
     }
 
-    // not sure this is necessary to put into its own loop. May need to make a whole separate function for the projectile system and seperate it from the player control system. The projectils are not properly spawning at player location now.
-    for (entity, mut transform, sprite_type, mut direction) in sprite_position.iter_mut() {
-        if sprite_type == &SpriteType::Player {
-            let player_position = transform.translation;
-            let player_direction = *direction;
-        }
-            
-
-        if keyboard_input.just_pressed(KeyCode::Space) {
-            println!("Player position when firing: {:?}", player_position); // Debug print
-            commands
-            .spawn(SpriteBundle{
-                sprite: Sprite {
-                    custom_size: Some(PROJECTILE_SIZE),
-                    ..Default::default()
-                },
-                texture: asset_server.load("objects/rusty-fireball.png"),
-                transform: Transform::from_xyz(player_position.x, player_position.y + 20.0, 5.0),
-                ..Default::default()
-            })
-            .insert(player_direction)
-            .insert(SpriteType::Projectile);
-        }
-    }
 
 }
 
@@ -337,49 +311,22 @@ fn window_dimensions(windows: &mut Query<&mut Window>) -> (f32,f32) {
 
 //Function to seperate the proejctile logic
 fn fire_projectile(
-    mut commands: Commands,
-    mut sprite: Query<(Entity, &mut Transform, &SpriteType, &mut Direction)>, keyboard_input: Res<Input<KeyCode>>, 
-    mut windows: Query<&mut Window>,
-    asset_server: Res<AssetServer>,
-    time: Res<Time>,
-    player_position: Transform,
+    commands: &mut Commands,
+    asset_server: &Res<AssetServer>,
+    player_position: &Transform,
     player_direction: Direction,
 ) {
-
-    let (window_width, window_height) = window_dimensions(&mut windows);
-    //Will need to get player position 
-    //  then use it to spawn projectil at right location. 
     commands
-    .spawn(SpriteBundle{
-        sprite: Sprite {
-            custom_size: Some(PROJECTILE_SIZE),
+        .spawn(SpriteBundle {
+            sprite: Sprite {
+                custom_size: Some(PROJECTILE_SIZE),
+                ..Default::default()
+            },
+            texture: asset_server.load("objects/rusty-fireball.png"),
+            transform: Transform::from_xyz(player_position.translation.x, player_position.translation.y + 20.0, 5.0),
             ..Default::default()
-        },
-        texture: asset_server.load("objects/rusty-fireball.png"),
-        transform: Transform::from_xyz(player_position.translation.x, player_position.translation.y + 20.0, 5.0),
-        ..Default::default()
-    })
-    .insert(player_direction)
-    .insert(SpriteType::Projectile);
-    for (entity, transform, sprite_type, direction) in &sprite {
-        if *sprite_type == SpriteType::Projectile {
-            match *direction {
-                Direction::Right => {
-                    transform.translation.x += PROJECTILE_SPEED * time.delta_seconds(); // Move to the right
-                    if transform.translation.x > window_width {
-                        commands.entity(entity).despawn();
-                    }
-                },
-                Direction::Left => {
-                    transform.translation.x -= PROJECTILE_SPEED * time.delta_seconds(); // Move to the left
-                    if transform.translation.x < -window_width {
-                        commands.entity(entity).despawn();
-                    }
-                }
-                Direction::Up => transform.translation.y += PROJECTILE_SPEED * time.delta_seconds(),
-                Direction::Down => transform.translation.y -= PROJECTILE_SPEED * time.delta_seconds(),
-            }
-            
-    }
-    }
+        })
+        .insert(player_direction)
+        .insert(SpriteType::Projectile);
 }
+
