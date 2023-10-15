@@ -218,7 +218,7 @@ fn sprite_control(
 
             //not working yet may need to place elsewhere
             if keyboard_input.pressed(KeyCode::Space){
-                fire_projectile(&mut commands, &asset_server, &transform, player_direction);
+                fire_projectile(&mut commands, &asset_server, *transform, player_direction);
             }
             
         }  
@@ -243,7 +243,11 @@ fn sprite_control(
 
 // First version of simple function for detecting collisions, under construction.
 // This is really messy and I"m not sure I fully understand why its working
-fn sprites_collide(mut sprite_position: Query<(&mut Transform, &SpriteType, &Sprite)>,mut windows: Query<&mut Window>) {
+fn sprites_collide(
+    mut commands: Commands,
+    mut sprite_position: Query<(Entity, &mut Transform, &SpriteType, &Sprite)>,
+    mut windows: Query<&mut Window>,
+) {
     // Here we instantiate positions and sizes. I think this should be a Struct
     let mut player_position: Option<Transform> = None;
     let mut enemy_position: Option<Transform> = None;
@@ -252,7 +256,7 @@ fn sprites_collide(mut sprite_position: Query<(&mut Transform, &SpriteType, &Spr
     let mut enemy_size: Option<Vec2> = None;
     let mut projectile_size: Option<Vec2> = None;
 
-    for (transform, sprite_type, sprite) in &mut sprite_position.iter() {
+    for (_ , transform, sprite_type, sprite) in &mut sprite_position.iter() {
         let size = sprite.custom_size.unwrap_or_else(|| sprite.rect.as_ref().map_or(Vec2::new(0.0,0.0), |r| r.size()));
         match *sprite_type {
             SpriteType::Player => {
@@ -274,13 +278,24 @@ fn sprites_collide(mut sprite_position: Query<(&mut Transform, &SpriteType, &Spr
     if let (Some(player_pos), Some(player_s), Some(enemy_pos), Some(enemy_s)) = (player_position, player_size, enemy_position, enemy_size){
         let collision = collide(player_pos.translation, player_s / 1.5, enemy_pos.translation, enemy_s / 1.5);
         if collision.is_some() {
-            for (mut transform, sprite_type, _) in sprite_position.iter_mut(){
-                if *sprite_type == SpriteType::Player {
-                    let window = windows.single_mut();
-                    let window_width = window.width()/2.0;
-                    let window_height = window.height()/2.0;
-                        
-                    transform.translation = Vec3::new(window_width, window_height, transform.translation.z);
+            for (entity, mut transform, sprite_type, _) in sprite_position.iter_mut(){
+                match *sprite_type {
+                    SpriteType::Projectile => {
+                        commands.entity(entity).despawn();
+                    },
+                    SpriteType::Player => {
+                        let window = windows.single_mut();
+                        let window_width = window.width()/2.0;
+                        let window_height = window.height()/2.0;
+                        transform.translation = Vec3::new(window_width, window_height, transform.translation.z);
+                    },
+                    SpriteType::Enemy => {
+                        let window = windows.single_mut();
+                        let window_width = window.width()/2.0;
+                        let window_height = window.height()/2.0;
+                        transform.translation = Vec3::new(-window_width, -window_height, transform.translation.z);
+                    },
+                    _ => {}
                 }
             }
         }
@@ -289,18 +304,21 @@ fn sprites_collide(mut sprite_position: Query<(&mut Transform, &SpriteType, &Spr
     if let (Some(projectile_pos), Some(projectile_s), Some(enemy_pos), Some(enemy_s)) = (projectile_position, projectile_size, enemy_position, enemy_size){
         let collision = collide(projectile_pos.translation, projectile_s, enemy_pos.translation, enemy_s);
         if collision.is_some() {
-            for (mut transform, sprite_type, _) in sprite_position.iter_mut(){
+            for (entity, mut transform, sprite_type, _) in sprite_position.iter_mut(){
+                if *sprite_type == SpriteType::Projectile {
+                    commands.entity(entity).despawn();
+                }
                 if *sprite_type == SpriteType::Enemy {
                     let window = windows.single_mut();
                     let window_width = window.width()/2.0;
                     let window_height = window.height()/2.0;
-                        
                     transform.translation = Vec3::new(-window_width, -window_height, transform.translation.z);
                 }
             }
         }
     }
 }
+
 
 
 //This function gets our window info (x,y dimensions)
@@ -310,12 +328,22 @@ fn window_dimensions(windows: &mut Query<&mut Window>) -> (f32,f32) {
 }
 
 //Function to seperate the proejctile logic
+
 fn fire_projectile(
     commands: &mut Commands,
     asset_server: &Res<AssetServer>,
-    player_position: &Transform,
+    player_position: Transform,
     player_direction: Direction,
 ) {
+    let mut x_adjustment = 0.0;
+    let mut projectile_direction = Direction::Up;
+    if player_direction == Direction::Left {
+        x_adjustment = player_position.translation.x + 75.0;
+        projectile_direction = Direction::Right;
+    } else {
+        x_adjustment = player_position.translation.x - 75.0;
+        projectile_direction = Direction::Left;
+    }
     commands
         .spawn(SpriteBundle {
             sprite: Sprite {
@@ -323,10 +351,10 @@ fn fire_projectile(
                 ..Default::default()
             },
             texture: asset_server.load("objects/rusty-fireball.png"),
-            transform: Transform::from_xyz(player_position.translation.x, player_position.translation.y + 20.0, 5.0),
+            
+            transform: Transform::from_xyz(x_adjustment, player_position.translation.y + 20.0, 5.0),
             ..Default::default()
         })
-        .insert(player_direction)
+        .insert(projectile_direction)
         .insert(SpriteType::Projectile);
 }
-
