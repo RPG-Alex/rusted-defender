@@ -217,7 +217,7 @@ fn sprite_control(
             }
 
             //not working yet may need to place elsewhere
-            if keyboard_input.pressed(KeyCode::Space){
+            if keyboard_input.just_pressed(KeyCode::Space){
                 fire_projectile(&mut commands, &asset_server, *transform, player_direction);
             }
             
