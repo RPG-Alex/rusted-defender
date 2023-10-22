@@ -7,12 +7,12 @@ use bevy::{
 use rand::prelude::*;
 
 //Constants for the game
-const SPRITE_SIZE: Vec2 = Vec2::new(200.0,200.0);
-const PROJECTILE_SIZE: Vec2 = Vec2::new(50.0, 50.0);
+const SPRITE_SIZE: Vec2 = Vec2::new(100.0,100.0);
+const PROJECTILE_SIZE: Vec2 = Vec2::new(25.0, 25.0);
 //Charging projectil increases size
 const PROJECTILE_CHARGED_SIZE: Vec2 = Vec2::new(200.0, 200.0);
 //  Movement Speed might change depending on game values
-const MOVEMENT_SPEED: f32 = 10.0;
+const MOVEMENT_SPEED: f32 = 1.0;
 //  Projectile speed might change depending on game feedback
 const PROJECTILE_SPEED: f32 = 1500.0;
 
@@ -103,6 +103,12 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 /// the last frame.
 /// //disabling function for time being
 fn sprite_auto_movement(
+
+    /*
+        ENEMY TODO:
+            - Have enemy know player's position 
+            - Based on player position move (towards player)
+     */
     time: Res<Time>, 
     mut sprite_position: Query<(&mut Direction, 
         &mut Transform, &SpriteType)>
@@ -122,10 +128,10 @@ fn sprite_auto_movement(
 
             //This logic will need to be changed. Probably need to add randomness, and modify or split enum. It is messing up projectile.
             match *sprite {
-                Direction::Up => transform.translation.y += 150. * time.delta_seconds(),
-                Direction::Down => transform.translation.y -= 150. * time.delta_seconds(),
-                Direction::Right => transform.translation.x += 150. * time.delta_seconds(),
-                Direction::Left => transform.translation.x -= 150. * time.delta_seconds(),
+                Direction::Up => transform.translation.y += 150. * time.delta_seconds() + MOVEMENT_SPEED,
+                Direction::Down => transform.translation.y -= 150. * time.delta_seconds() + MOVEMENT_SPEED,
+                Direction::Right => transform.translation.x += 150. * time.delta_seconds() + MOVEMENT_SPEED,
+                Direction::Left => transform.translation.x -= 150. * time.delta_seconds() + MOVEMENT_SPEED,
             }
     
             // Check the boundaries and update the direction
@@ -312,7 +318,7 @@ fn sprites_collide(
                     let window = windows.single_mut();
                     let window_width = window.width()/2.0;
                     let window_height = window.height()/2.0;
-                    transform.translation = Vec3::new(-window_width, -window_height, transform.translation.z);
+                    transform.translation = Vec3::new(-window_width+100.0, -window_height+100.0, transform.translation.z);
                 }
             }
         }
