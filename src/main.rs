@@ -5,6 +5,7 @@ use bevy::{
     sprite::collide_aabb::collide,
 };
 use rand::prelude::*;
+use std::time::Duration;
 
 //Constants for the game
 const SPRITE_SIZE: Vec2 = Vec2::new(100.0,100.0);
@@ -16,6 +17,11 @@ const MOVEMENT_SPEED: f32 = 1.0;
 //  Projectile speed might change depending on game feedback
 const PROJECTILE_SPEED: f32 = 1500.0;
 
+
+#[derive(Component)]
+struct chargeCounter {
+    time: Timer,
+}
 
 
 fn main() {
@@ -107,7 +113,7 @@ fn sprite_auto_movement(
     /*
         ENEMY TODO:
             - Have enemy know player's position 
-            - Based on player position move (towards player)
+            - Based on player position move (towards player)ca
      */
     time: Res<Time>, 
     mut sprite_position: Query<(&mut Direction, 
@@ -160,6 +166,17 @@ fn sprite_control(
     // get window dimensions
     let (window_width, window_height) = window_dimensions(&mut windows);
 
+    //Start our counter if the space key has been pressed
+    let mut timer = Timer::from_seconds(1.0, TimerMode::Once);
+    let mut projectile_size = PROJECTILE_SIZE;
+    if keyboard_input.pressed(KeyCode::Space) {
+        if timer.finished() == true {
+            projectile_size = PROJECTILE_CHARGED_SIZE;
+        }
+    } else {
+        timer.reset();
+        projectile_size = PROJECTILE_SIZE;
+    }
 
     let mut player_position = Vec3::default();
     let mut player_direction = Direction::Left;
@@ -189,7 +206,6 @@ fn sprite_control(
 
             if keyboard_input.pressed(KeyCode::Left) {
                 if *direction == Direction::Left{
-                    println!("Player moved left to: {:?}", transform.translation);
                     transform.rotate_y(3.14159);
                     *direction = Direction::Right;
                 }
@@ -222,10 +238,12 @@ fn sprite_control(
                 }
             }
 
-            //not working yet may need to place elsewhere
-            if keyboard_input.just_pressed(KeyCode::Space){
-                fire_projectile(&mut commands, &asset_server, *transform, player_direction);
-            }
+            //Need to redo this for charge counter. As of now it does not count time. Current logic is unreachable state.
+            if keyboard_input.just_released(KeyCode::Space) {
+                    fire_projectile(&mut commands, &asset_server, *transform, player_direction, projectile_size);
+                } 
+
+
             
         }  
         if *sprite_type == SpriteType::Background {
@@ -340,6 +358,7 @@ fn fire_projectile(
     asset_server: &Res<AssetServer>,
     player_position: Transform,
     player_direction: Direction,
+    projectile_size: Vec2,
 ) {
     let mut x_adjustment = 0.0;
     let mut projectile_direction = Direction::Up;
@@ -353,7 +372,7 @@ fn fire_projectile(
     commands
         .spawn(SpriteBundle {
             sprite: Sprite {
-                custom_size: Some(PROJECTILE_SIZE),
+                custom_size: Some(projectile_size),
                 ..Default::default()
             },
             texture: asset_server.load("objects/rusty-fireball.png"),
