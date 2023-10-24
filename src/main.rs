@@ -51,6 +51,20 @@ enum Direction{
    Down,
 }
 
+// Attributes structure for all sprites to simplify interacting with them.
+/*
+    TODO: Refactor Code to impelement this struct!
+*/
+#[derive(Component, PartialEq)]
+struct SpriteAttributes {
+    id: u8,
+    sprite_type: SpriteType,
+    direction: Direction,
+    movement_speed: f32,
+    size: Vec2,
+    visible: bool,    
+}
+
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     commands.spawn(Camera2dBundle::default());
@@ -80,7 +94,37 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         },Direction::Left
     )).insert(SpriteType::Player);
 
-   
+    // Spawn projectiles (starting with 3x)
+    commands
+    .spawn(SpriteBundle {
+        sprite: Sprite {
+            custom_size: Some(PROJECTILE_SIZE),
+            ..Default::default()
+        },
+        texture: asset_server.load("objects/rusty-fireball.png"),
+        ..Default::default()
+    })
+    .insert(SpriteType::Projectile);
+       commands
+    .spawn(SpriteBundle {
+        sprite: Sprite {
+            custom_size: Some(PROJECTILE_SIZE),
+            ..Default::default()
+        },
+        texture: asset_server.load("objects/rusty-fireball.png"),
+        ..Default::default()
+    })
+    .insert(SpriteType::Projectile);
+    commands
+    .spawn(SpriteBundle {
+        sprite: Sprite {
+            custom_size: Some(PROJECTILE_SIZE),
+            ..Default::default()
+        },
+        texture: asset_server.load("objects/rusty-fireball.png"),
+        ..Default::default()
+    })
+    .insert(SpriteType::Projectile);
 
     //enemy sprite
     commands.spawn((
@@ -351,8 +395,7 @@ fn window_dimensions(windows: &mut Query<&mut Window>) -> (f32,f32) {
     (window.width()/2.0, window.height()/2.0)
 }
 
-//Function to seperate the proejctile logic
-
+//function for firing the projectile
 fn fire_projectile(
     commands: &mut Commands,
     asset_server: &Res<AssetServer>,
