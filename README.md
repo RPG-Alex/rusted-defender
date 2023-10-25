@@ -30,3 +30,9 @@ Please note that this project is currently under construction. Please check back
 Excitement abounds as we prepare to share Rusted Defender with you, and updates will be provided on our progress. Be sure to check back for the latest news and announcements as we work to create a memorable experience for players of all ages.
 
 Your interest in Rusted Defender is greatly appreciated!
+
+## Development and Running locally:
+
+This project uses cargo and can be run once cargo and rust are properly installed via this command:
+
+`cargo run --features bevy/dynamic_linking`
