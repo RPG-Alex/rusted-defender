@@ -16,23 +16,15 @@ const PROJECTILE_CHARGED_SIZE: Vec2 = Vec2::new(200.0, 200.0);
 const MOVEMENT_SPEED: f32 = 1.0;
 //  Projectile speed might change depending on game feedback
 const PROJECTILE_SPEED: f32 = 1500.0;
+//
 
 
+// Game Structures
 #[derive(Component)]
 struct chargeCounter {
+    
     time: Timer,
 }
-
-
-fn main() {
-    App::new()
-        .add_plugins(DefaultPlugins)
-        .add_systems(Startup, setup)
-        .add_systems(Update, (sprite_auto_movement,sprite_control, sprites_collide, bevy::window::close_on_esc),)
-        .run();
-}
-
-
 ///Create enum for distinguishing between sprites
 #[derive(Component, PartialEq)]
 enum SpriteType {
@@ -65,6 +57,14 @@ struct SpriteAttributes {
     visible: bool,    
 }
 
+fn main() {
+    App::new()
+        .add_plugins(DefaultPlugins)
+        .add_systems(Startup, setup)
+        .add_systems(Update, (sprite_auto_movement,sprite_control, sprites_collide, bevy::window::close_on_esc),)
+        .run();
+}
+
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     commands.spawn(Camera2dBundle::default());
@@ -92,7 +92,14 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             transform: Transform::from_xyz(-200.0, -200., 0.),
             ..default()
         },Direction::Left
-    )).insert(SpriteType::Player);
+    )).insert(SpriteAttributes{
+        id: 1,
+        sprite_type: SpriteType::Player,
+        direction: Direction::Left,
+        movement_speed: MOVEMENT_SPEED,
+        size: SPRITE_SIZE,
+        visible: true,
+    });
 
     // Spawn projectiles (starting with 3x)
     commands
@@ -202,7 +209,7 @@ fn sprite_auto_movement(
 ///Function used for passing user inputs to contrl sprite(s)
 fn sprite_control(
     mut commands: Commands,
-    mut sprite_position: Query<(Entity, &mut Transform, &SpriteType, &mut Direction)>, keyboard_input: Res<Input<KeyCode>>, 
+    mut sprite_position: Query<(Entity, &mut Transform, &SpriteAttributes, &mut Direction)>, keyboard_input: Res<Input<KeyCode>>, 
     mut windows: Query<&mut Window>,
     asset_server: Res<AssetServer>,
     time: Res<Time>,
@@ -225,7 +232,8 @@ fn sprite_control(
     let mut player_position = Vec3::default();
     let mut player_direction = Direction::Left;
 
-    for (entity, mut transform, sprite_type, mut direction) in sprite_position.iter_mut() {
+    for (entity, mut transform, sprite_attributes, mut direction) in sprite_position.iter_mut() {
+        let sprite_type = &sprite_attributes.sprite_type;
         if *sprite_type == SpriteType::Projectile {
             match *direction {
                 Direction::Right => {
