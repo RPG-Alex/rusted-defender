@@ -78,7 +78,14 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         texture: asset_server.load("backgrounds/home-screen-background-small.png"),
         transform: Transform::from_xyz(0., 0., -10.), // Ensure Z-coordinate is behind other entities
         ..default()}, Direction::Up
-    )).insert(SpriteType::Background);
+    )).insert(SpriteAttributes{
+        id:0,
+        sprite_type: SpriteType::Background,
+        direction: Direction::Up,
+        movement_speed: 0.0,
+        size: SPRITE_SIZE,
+        visible: true,
+    });
     //player sprite
     commands.spawn((
         SpriteBundle {
@@ -185,16 +192,13 @@ fn sprite_auto_movement(
                 _ => {}
             }
         }
-
-    
     }
-    
 }
 
 ///Function used for passing user inputs to contrl sprite(s)
 fn sprite_control(
     mut commands: Commands,
-    mut sprite_position: Query<(Entity, &mut Transform, &SpriteAttributes, &mut Direction)>, keyboard_input: Res<Input<KeyCode>>, 
+    mut sprite_info: Query<(Entity, &mut Transform, &mut SpriteAttributes)>, keyboard_input: Res<Input<KeyCode>>, 
     mut windows: Query<&mut Window>,
     asset_server: Res<AssetServer>,
     time: Res<Time>,
@@ -203,87 +207,87 @@ fn sprite_control(
     let (window_width, window_height) = window_dimensions(&mut windows);
 
     //Start our counter if the space key has been pressed
-    let mut timer = Timer::from_seconds(1.0, TimerMode::Once);
-    let mut projectile_size = PROJECTILE_SIZE;
-    if keyboard_input.pressed(KeyCode::Space) {
-        if timer.finished() == true {
-            projectile_size = PROJECTILE_CHARGED_SIZE;
-        }
-    } else {
-        timer.reset();
-        projectile_size = PROJECTILE_SIZE;
-    }
+    // let mut timer = Timer::from_seconds(1.0, TimerMode::Once);
+    // let mut projectile_size = PROJECTILE_SIZE;
+    // if keyboard_input.pressed(KeyCode::Space) {
+    //     if timer.finished() == true {
+    //         projectile_size = PROJECTILE_CHARGED_SIZE;
+    //     }
+    // } else {
+    //     timer.reset();
+    //     projectile_size = PROJECTILE_SIZE;
+    // }
+
 
     let mut player_position = Vec3::default();
     let mut player_direction = Direction::Left;
 
-    for (entity, mut transform, sprite_attributes, mut direction) in sprite_position.iter_mut() {
-        let sprite_type = &sprite_attributes.sprite_type;
-        if *sprite_type == SpriteType::Projectile {
-            match *direction {
+    for (entity, mut location, mut sprite_attributes) in sprite_info.iter_mut() {
+        if sprite_attributes.sprite_type == SpriteType::Projectile {
+            match sprite_attributes.direction {
                 Direction::Right => {
-                    transform.translation.x += PROJECTILE_SPEED * time.delta_seconds(); // Move to the right
-                    if transform.translation.x > window_width {
+                    location.translation.x += sprite_attributes.movement_speed * time.delta_seconds(); // Move to the right
+                    if location.translation.x > window_width {
                         commands.entity(entity).despawn();
                     }
                 },
                 Direction::Left => {
-                    transform.translation.x -= PROJECTILE_SPEED * time.delta_seconds(); // Move to the left
-                    if transform.translation.x < -window_width {
+                    location.translation.x -= sprite_attributes.movement_speed * time.delta_seconds(); // Move to the left
+                    if location.translation.x < -window_width {
                         commands.entity(entity).despawn();
                     }
                 }
-                Direction::Up => transform.translation.y += PROJECTILE_SPEED * time.delta_seconds(),
-                Direction::Down => transform.translation.y -= PROJECTILE_SPEED * time.delta_seconds(),
+                Direction::Up => location.translation.y += sprite_attributes.movement_speed * time.delta_seconds(),
+                Direction::Down => location.translation.y -= sprite_attributes.movement_speed * time.delta_seconds(),
             }
         }
-        if *sprite_type == SpriteType::Player {
-            player_position = transform.translation;
-            player_direction = *direction;
+        if sprite_attributes.sprite_type == SpriteType::Player {
+            player_position = location.translation;
+            player_direction = sprite_attributes.direction;
 
             if keyboard_input.pressed(KeyCode::Left) {
-                if *direction == Direction::Left{
-                    transform.rotate_y(3.14159);
-                    *direction = Direction::Right;
+                if sprite_attributes.direction == Direction::Left{
+                    location.rotate_y(3.14159);
+                    sprite_attributes.direction = Direction::Right;
                 }
-                transform.translation.x -= MOVEMENT_SPEED;
-                if transform.translation.x < -window_width {
-                    transform.translation.x = window_width;
+                location.translation.x -= sprite_attributes.movement_speed;
+                if location.translation.x < -window_width {
+                    location.translation.x = window_width;
                 }
             }
             if keyboard_input.pressed(KeyCode::Right) {    
-                if *direction == Direction::Right{
-                    transform.rotate_y(3.14159);
-                    *direction = Direction::Left;
+                if sprite_attributes.direction == Direction::Right{
+                    location.rotate_y(3.14159);
+                    sprite_attributes.direction = Direction::Left;
                 }
 
-                transform.translation.x += MOVEMENT_SPEED;
-                if transform.translation.x > window_width {
-                    transform.translation.x = -window_width;
+                location.translation.x += sprite_attributes.movement_speed;
+                if location.translation.x > window_width {
+                    location.translation.x = -window_width;
                 }
             }
             if keyboard_input.pressed(KeyCode::Down) {
-                transform.translation.y -= MOVEMENT_SPEED;
-                if transform.translation.y < -window_height{
-                    transform.translation.y = window_height;
+                location.translation.y -= sprite_attributes.movement_speed;
+                if location.translation.y < -window_height{
+                    location.translation.y = window_height;
                 }
             }
             if keyboard_input.pressed(KeyCode::Up) {
-                transform.translation.y += MOVEMENT_SPEED;
-                if transform.translation.y > window_height {
-                    transform.translation.y = -window_height;
+                location.translation.y += sprite_attributes.movement_speed;
+                if location.translation.y > window_height {
+                    location.translation.y = -window_height;
                 }
             }
 
             //Need to redo this for charge counter. As of now it does not count time. Current logic is unreachable state.
             if keyboard_input.just_released(KeyCode::Space) {
-                    fire_projectile(&mut commands, &asset_server, *transform, player_direction, projectile_size);
+                    fire_projectile(&mut commands, &asset_server, *location, player_direction, PROJECTILE_SIZE);
                 } 
 
 
             
         }  
-        if *sprite_type == SpriteType::Background {
+        if sprite_attributes.sprite_type == SpriteType::Background {
             // Calculate the scale factors, not sure why its 50.0
             let sprite_original_width = 50.0; // adjust this based on your sprite's original size / 2 for some reason
             let sprite_original_height = 50.0; // adjust this based on your sprite's original size / 2 for some reason
@@ -292,7 +296,7 @@ fn sprite_control(
             let scale_y = window_height / sprite_original_height;
     
             // Set the scale of the Transform component
-            transform.scale = Vec3::new(scale_x, scale_y, 1.0);
+            location.scale = Vec3::new(scale_x, scale_y, 1.0);
         }
     }
 
