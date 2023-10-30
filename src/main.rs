@@ -168,7 +168,7 @@ fn sprite_auto_movement(
             }
 
 
-            //This logic will need to be changed. Probably need to add randomness, and modify or split enum. It is messing up projectile.
+            //Used to guide sprite in a square pattern based on direction
             match sprite_attributes.direction {
                 Direction::Up => location.translation.y += 150. * time.delta_seconds() + MOVEMENT_SPEED,
                 Direction::Down => location.translation.y -= 150. * time.delta_seconds() + MOVEMENT_SPEED,
