@@ -21,8 +21,7 @@ const PROJECTILE_SPEED: f32 = 1500.0;
 
 // Game Structures
 #[derive(Component)]
-struct chargeCounter {
-    
+struct ChargeCounter {
     time: Timer,
 }
 ///Create enum for distinguishing between sprites
@@ -89,7 +88,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 ..default()
             },
             texture: asset_server.load("sprites/rusted-avenger.png"),
-            transform: Transform::from_xyz(-200.0, -200., 0.),
+            transform: Transform::from_xyz(0.0, 0.0, 0.0),
             ..default()
         },Direction::Left
     )).insert(SpriteAttributes{
@@ -101,38 +100,25 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         visible: true,
     });
 
-    // Spawn projectiles (starting with 3x)
-    commands
-    .spawn(SpriteBundle {
-        sprite: Sprite {
-            custom_size: Some(PROJECTILE_SIZE),
-            ..Default::default()
-        },
-        texture: asset_server.load("objects/rusty-fireball.png"),
-        ..Default::default()
-    })
-    .insert(SpriteType::Projectile);
-       commands
-    .spawn(SpriteBundle {
-        sprite: Sprite {
-            custom_size: Some(PROJECTILE_SIZE),
-            ..Default::default()
-        },
-        texture: asset_server.load("objects/rusty-fireball.png"),
-        ..Default::default()
-    })
-    .insert(SpriteType::Projectile);
-    commands
-    .spawn(SpriteBundle {
-        sprite: Sprite {
-            custom_size: Some(PROJECTILE_SIZE),
-            ..Default::default()
-        },
-        texture: asset_server.load("objects/rusty-fireball.png"),
-        ..Default::default()
-    })
-    .insert(SpriteType::Projectile);
-
+    // Spawn projectiles
+    // commands
+    // .spawn(SpriteBundle {
+    //     sprite: Sprite {
+    //         custom_size: Some(PROJECTILE_SIZE),
+    //         ..Default::default()
+    //     },
+    //     texture: asset_server.load("objects/rusty-fireball.png"),
+    //     ..Default::default()
+    // })
+    // .insert( SpriteAttributes {
+    //     id: 2, 
+    //     sprite_type: SpriteType::Projectile,
+    //     direction: Direction::Left,
+    //     movement_speed: PROJECTILE_SPEED,
+    //     size: PROJECTILE_SIZE,
+    //     visible: false,
+    // });
+    
     //enemy sprite
     commands.spawn((
         SpriteBundle {
@@ -145,8 +131,14 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             transform: Transform::from_xyz(200., 200., 0.),
             ..default()
         },
-        Direction::Right,
-    )).insert(SpriteType::Enemy);
+    )).insert( SpriteAttributes{
+        id: 3, 
+        sprite_type: SpriteType::Enemy,
+        direction: Direction::Right,
+        movement_speed: MOVEMENT_SPEED,
+        size: SPRITE_SIZE,
+        visible: true,
+    });
 
     commands.spawn(AudioBundle {
         source: asset_server.load("sound/background-track-1.ogg"),
@@ -160,43 +152,36 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 /// the last frame.
 /// //disabling function for time being
 fn sprite_auto_movement(
-
-    /*
-        ENEMY TODO:
-            - Have enemy know player's position 
-            - Based on player position move (towards player)ca
-     */
     time: Res<Time>, 
-    mut sprite_position: Query<(&mut Direction, 
-        &mut Transform, &SpriteType)>
+    mut sprite_info: Query<(&mut Transform, &mut SpriteAttributes)>
     ) {
     let mut rng = rand::thread_rng();
-    for (mut sprite, mut transform, sprite_type) in &mut sprite_position {
+    for (mut location, mut sprite_attributes) in &mut sprite_info {
         //checks first for the enemy enum
-        if *sprite_type == SpriteType::Enemy {
+        if sprite_attributes.sprite_type == SpriteType::Enemy {
             //randomly change direction
             match rng.gen_range(0..4) {
-                0 => {transform.translation.y += 250. * time.delta_seconds();},
-                1 => {transform.translation.y -= 250. * time.delta_seconds()},
-                2 => {transform.translation.x += 250. * time.delta_seconds()},
-                _ => {transform.translation.x -= 250. * time.delta_seconds()},
+                0 => {location.translation.y += 250. * time.delta_seconds();},
+                1 => {location.translation.y -= 250. * time.delta_seconds()},
+                2 => {location.translation.x += 250. * time.delta_seconds()},
+                _ => {location.translation.x -= 250. * time.delta_seconds()},
             }
 
 
             //This logic will need to be changed. Probably need to add randomness, and modify or split enum. It is messing up projectile.
-            match *sprite {
-                Direction::Up => transform.translation.y += 150. * time.delta_seconds() + MOVEMENT_SPEED,
-                Direction::Down => transform.translation.y -= 150. * time.delta_seconds() + MOVEMENT_SPEED,
-                Direction::Right => transform.translation.x += 150. * time.delta_seconds() + MOVEMENT_SPEED,
-                Direction::Left => transform.translation.x -= 150. * time.delta_seconds() + MOVEMENT_SPEED,
+            match sprite_attributes.direction {
+                Direction::Up => location.translation.y += 150. * time.delta_seconds() + MOVEMENT_SPEED,
+                Direction::Down => location.translation.y -= 150. * time.delta_seconds() + MOVEMENT_SPEED,
+                Direction::Right => location.translation.x += 150. * time.delta_seconds() + MOVEMENT_SPEED,
+                Direction::Left => location.translation.x -= 150. * time.delta_seconds() + MOVEMENT_SPEED,
             }
     
             // Check the boundaries and update the direction
-            match *sprite {
-                Direction::Up if transform.translation.y >= 200. => *sprite = Direction::Right,
-                Direction::Right if transform.translation.x >= 200. => *sprite = Direction::Down,
-                Direction::Down if transform.translation.y <= -200. => *sprite = Direction::Left,
-                Direction::Left if transform.translation.x <= -200. => *sprite = Direction::Up,
+            match sprite_attributes.direction {
+                Direction::Up if location.translation.y >= 200. => sprite_attributes.direction = Direction::Right,
+                Direction::Right if location.translation.x >= 200. => sprite_attributes.direction = Direction::Down,
+                Direction::Down if location.translation.y <= -200. => sprite_attributes.direction = Direction::Left,
+                Direction::Left if location.translation.x <= -200. => sprite_attributes.direction = Direction::Up,
                 _ => {}
             }
         }
