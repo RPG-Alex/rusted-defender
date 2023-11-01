@@ -9,15 +9,15 @@ use std::time::Duration;
 
 //Constants for the game
 const SPRITE_SIZE: Vec2 = Vec2::new(100.0,100.0);
-const PROJECTILE_SIZE: Vec2 = Vec2::new(25.0, 25.0);
+const PROJECTILE_SIZE: Vec2 = Vec2::new(35.0, 35.0);
 //Charging projectil increases size
 const PROJECTILE_CHARGED_SIZE: Vec2 = Vec2::new(200.0, 200.0);
 //  Movement Speed might change depending on game values
-const MOVEMENT_SPEED: f32 = 30.0;
+const MOVEMENT_SPEED: f32 = 1.0;
 //  Projectile speed might change depending on game feedback
 const PROJECTILE_SPEED: f32 = 1500.0;
 // ENemey movement speed
-const ENEMY_MOVEMENT_SPEED: f32 = 20.0;
+const ENEMY_MOVEMENT_SPEED: f32 = 1.0;
 
 
 // Game Structures
@@ -108,25 +108,6 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         visible: true,
     });
 
-    // Spawn projectiles
-    // commands
-    // .spawn(SpriteBundle {
-    //     sprite: Sprite {
-    //         custom_size: Some(PROJECTILE_SIZE),
-    //         ..Default::default()
-    //     },
-    //     texture: asset_server.load("objects/rusty-fireball.png"),
-    //     ..Default::default()
-    // })
-    // .insert( SpriteAttributes {
-    //     id: 2, 
-    //     sprite_type: SpriteType::Projectile,
-    //     direction: Direction::Left,
-    //     movement_speed: PROJECTILE_SPEED,
-    //     size: PROJECTILE_SIZE,
-    //     visible: false,
-    // });
-    
     //enemy sprite
     commands.spawn((
         SpriteBundle {
@@ -222,6 +203,7 @@ fn sprite_control(
                         commands.entity(entity).despawn();
                     }
                 }
+                // These should be unreachable states
                 Direction::Up => location.translation.y += sprite_attributes.movement_speed * time.delta_seconds(),
                 Direction::Down => location.translation.y -= sprite_attributes.movement_speed * time.delta_seconds(),
             }
@@ -263,7 +245,7 @@ fn sprite_control(
 
            // fires the projectile
             if keyboard_input.just_released(KeyCode::Space) {
-                    fire_projectile(&mut commands, &asset_server, *location, PROJECTILE_SIZE);
+                    fire_projectile(&mut commands, &asset_server, *location, PROJECTILE_SIZE, sprite_attributes.direction);
                 } 
 
 
@@ -289,10 +271,9 @@ fn sprite_control(
 
 
 // First version of simple function for detecting collisions, under construction.
-// This is really messy and I"m not sure I fully understand why its working
 fn sprites_collide(
     mut commands: Commands,
-    mut sprites_info: Query<(Entity, &mut Transform, &mut SpriteAttributes, &Sprite)>,
+    mut sprites_info: Query<(Entity, &mut Transform, &mut SpriteAttributes)>,
     mut windows: Query<&mut Window>,
 ) {
     // Here we instantiate positions and sizes. I think this should be a Struct
@@ -303,8 +284,8 @@ fn sprites_collide(
     let mut enemy_size: Option<Vec2> = None;
     let mut projectile_size: Option<Vec2> = None;
 
-    for (_ , sprite_location, sprite_attributes, sprite) in &mut sprites_info.iter() {
-        let size = sprite.custom_size.unwrap_or_else(|| sprite.rect.as_ref().map_or(Vec2::new(0.0,0.0), |r| r.size()));
+    for (_ , sprite_location, sprite_attributes) in &mut sprites_info.iter() {
+        let size = sprite_attributes.size;
         match sprite_attributes.sprite_type {
             SpriteType::Player => {
                 player_position = Some(*sprite_location);
@@ -325,7 +306,7 @@ fn sprites_collide(
     if let (Some(player_pos), Some(player_s), Some(enemy_pos), Some(enemy_s)) = (player_position, player_size, enemy_position, enemy_size){
         let collision = collide(player_pos.translation, player_s / 1.5, enemy_pos.translation, enemy_s / 1.5);
         if collision.is_some() {
-            for (entity, mut location, sprite_attributes, _) in sprites_info.iter_mut(){
+            for (entity, mut location, sprite_attributes) in sprites_info.iter_mut(){
                 match sprite_attributes.sprite_type {
                     SpriteType::Projectile => {
                         commands.entity(entity).despawn();
@@ -351,7 +332,7 @@ fn sprites_collide(
     if let (Some(projectile_pos), Some(projectile_s), Some(enemy_pos), Some(enemy_s)) = (projectile_position, projectile_size, enemy_position, enemy_size){
         let collision = collide(projectile_pos.translation, projectile_s, enemy_pos.translation, enemy_s);
         if collision.is_some() {
-            for (entity, mut location, sprite_info, _) in sprites_info.iter_mut(){
+            for (entity, mut location, sprite_info) in sprites_info.iter_mut(){
                 if sprite_info.sprite_type == SpriteType::Projectile {
                     commands.entity(entity).despawn();
                 }
@@ -380,12 +361,10 @@ fn fire_projectile(
     asset_server: &Res<AssetServer>,
     player_position: Transform,
     projectile_size: Vec2,
+    player_direction: Direction
 ) {
-    let mut x_adjustment = 0.0;
-    let mut projectile_direction = Direction::Up;
-    x_adjustment = player_position.translation.x - 75.0;
-    projectile_direction = Direction::Left;
-    
+    let x_adjustment = player_position.translation.x - 75.0;
+        
     commands
         .spawn(SpriteBundle {
             sprite: Sprite {
@@ -397,11 +376,14 @@ fn fire_projectile(
             transform: Transform::from_xyz(x_adjustment, player_position.translation.y, 0.0),
             ..Default::default()
         })
-        .insert(projectile_direction)
         .insert(SpriteAttributes{
             id: 2, 
             sprite_type: SpriteType::Projectile,
-            direction: Direction::Left,
+            direction: {if player_direction == Direction::Left{
+                Direction::Right
+            } else {
+                Direction::Left
+            }},
             movement_speed: PROJECTILE_SPEED,
             size: PROJECTILE_SIZE,
             visible: false,
