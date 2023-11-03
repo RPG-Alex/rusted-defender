@@ -38,10 +38,10 @@ Please note that this project is currently under construction. Please check back
 
 ### Done Stuff:
 
-    [x] Player sprite control implemented.
-    [x] Collision mechanics incorporated.
-    [x] Projectile and firing functionality realized.
-    [x] Refactor code using the new sprite attributes struct.
+- [x] Player sprite control implemented.
+- [x] Collision mechanics incorporated.
+- [x] Projectile and firing functionality realized.
+- [x] Refactor code using the new sprite attributes struct.
 
 ### Not Done:
 
@@ -90,8 +90,32 @@ Development and Running locally:
 
 ## Run Locally
 
-This project uses cargo and can be run once cargo and rust are properly installed via this command:
 
-cargo run --features bevy/dynamic_linking
+
+    Install Rust:
+        First, you need to install Rust on your system. You can download it from the official Rust website.
+        Follow the instructions on the website to install Rust. This will also install cargo, Rust’s package manager.
+
+    Clone the Repository:
+        Clone the game repository to your local machine using Git. If you don’t have Git installed, you can download it from the official Git website.
+        Open a terminal/command prompt, navigate to the directory where you want to clone the repository, and run the following command:
+
+    git clone <repository_url>
+
+    Replace <repository_url> with the URL of the game’s Git repository.
+
+    Build and Run the Game:
+        Navigate into the cloned repository’s directory:
+
+    cd <repository_name>
+
+    Replace <repository_name> with the name of the game’s repository.
+        Build and run the game using cargo with the following command:
+
+    cargo run --features bevy/dynamic_linking
+
+    This command tells cargo to run the game, and the --features bevy/dynamic_linking part is a feature flag for the Bevy game engine used in this project.
+
+And that’s it! The game should now be running on your local machine. Enjoy playing!
 
 <p align="center">[<a href="#readme-top">RETURN TO TOP</a>]</p>
