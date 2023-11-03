@@ -13,9 +13,6 @@
             <a href="#introduction">Introduction</a> 
         </li> 
         <li> 
-            <a href="#status">Status</a> 
-        </li> 
-        <li> 
             <a href="#roadmap">Roadmap</a> 
         </li> 
         <li> 
@@ -88,15 +85,17 @@ Please note that this project is currently under construction. Please check back
 Excitement abounds as we prepare to share Rusted Defender with you, and updates will be provided on our progress. Be sure to check back for the latest news and announcements as we work to create a memorable experience for players of all ages. Your interest in Rusted Defender is greatly appreciated!
 Development and Running locally:
 
-## Run Locally
+## Development and Run Locally
 
+If you are interested in developing and working on the game thats great! The game is in a pretty early state of development so please do feel free to start contributing!
 
+### Run locally 
 
-    Install Rust:
+#### Install Rust:
         First, you need to install Rust on your system. You can download it from the official Rust website.
         Follow the instructions on the website to install Rust. This will also install cargo, Rust’s package manager.
 
-    Clone the Repository:
+#### Clone the Repository:
         Clone the game repository to your local machine using Git. If you don’t have Git installed, you can download it from the official Git website.
         Open a terminal/command prompt, navigate to the directory where you want to clone the repository, and run the following command:
 
@@ -104,7 +103,7 @@ Development and Running locally:
 
     Replace <repository_url> with the URL of the game’s Git repository.
 
-    Build and Run the Game:
+#### Build and Run the Game:
         Navigate into the cloned repository’s directory:
 
     cd <repository_name>
