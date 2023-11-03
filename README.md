@@ -41,20 +41,54 @@ Please note that this project is currently under construction. Please check back
     [x] Player sprite control implemented.
     [x] Collision mechanics incorporated.
     [x] Projectile and firing functionality realized.
+    [x] Refactor code using the new sprite attributes struct.
 
 ### Not Done:
 
-    [ ] Refactor code using the new sprite attributes struct.
+
     [ ] Develop a splash screen.
+        [ ] Design a visually appealing splash screen.
+        [ ] Implement a loading animation.
     [ ] Create a start menu screen.
+        [ ] Design the layout of the start menu.
+        [ ] Add buttons for ‘Start Game’, ‘Settings’, ‘High Scores’, etc.
     [ ] Implement a scoring/lives system.
+        [ ] Design a scoring algorithm.
+        [ ] Display the score and lives on the game screen.
+        [ ] Implement game over logic when lives run out.
     [ ] Establish a comprehensive roadmap for the game overall.
-    [ ] More to come?
+        [ ] Define the game’s core mechanics and features.
+        [ ] Plan the development phases and timelines.
+    [ ] Implement sound effects and background music.
+        [ ] Choose or create suitable sound effects for game actions.
+        [ ] Add background music to enhance the gaming experience.
+    [ ] Create multiple levels of difficulty.
+        [ ] Design levels with increasing difficulty.
+        [ ] Implement level progression logic.
+    [ ] Add power-ups and bonuses.
+        [ ] Design various power-ups and bonuses.
+        [ ] Implement the logic for spawning and using power-ups.
+    [ ] Implement a save/load game feature.
+        [ ] Design a system for saving and loading game progress.
+        [ ] Implement the save/load feature in the game menu.
+    [ ] Optimize the game for performance.
+        [ ] Profile the game to identify performance bottlenecks.
+        [ ] Optimize the game code and assets for smooth gameplay.
+    [ ] Test the game thoroughly.
+        [ ] Perform unit testing for individual game components.
+        [ ] Conduct playtesting to gather feedback on game mechanics and difficulty.
+    [ ] Prepare the game for release.
+        [ ] Package the game for distribution.
+        [ ] Create promotional materials for the game release.
+    [ ] More to come? Absolutely, game development is an iterative and creative process! Keep the ideas flowing.
+
 
 ## Stay Tuned!
 
 Excitement abounds as we prepare to share Rusted Defender with you, and updates will be provided on our progress. Be sure to check back for the latest news and announcements as we work to create a memorable experience for players of all ages. Your interest in Rusted Defender is greatly appreciated!
 Development and Running locally:
+
+## Run Locally
 
 This project uses cargo and can be run once cargo and rust are properly installed via this command:
 
