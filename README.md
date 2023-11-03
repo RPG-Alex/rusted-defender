@@ -1,26 +1,28 @@
-<a name=“readme-top”></a>
+<a name="readme-top"></a>
 
 # Rusted Defender
 
-<div align=“center”> <img src=“images/logo.png” alt=“Logo” width=“80” height=“80”> </div>
+<div align="center"> 
+    <img src="images/logo.png" alt="Logo" width="80" height="80"> 
+</div>
 
 <details> 
     <summary>Contents</summary>
      <ol> 
         <li> 
-            <a href=“#introduction”>Introduction</a> 
+            <a href="#introduction">Introduction</a> 
         </li> 
         <li> 
-            <a href=“#status”>Status</a> 
+            <a href="#status">Status</a> 
         </li> 
         <li> 
-            <a href=“#roadmap”>Roadmap</a> 
+            <a href="#roadmap">Roadmap</a> 
         </li> 
         <li> 
-            <a href=“#stay-tuned”>Stay Tuned!</a> 
+            <a href="#stay-tuned">Stay Tuned!</a> 
         </li> 
         <li> 
-            <a href=“#development-and-running-locally”>Development and Running locally</a> 
+            <a href="#development-and-running-locally">Development and Running locally</a> 
             </li> 
     </ol> 
 </details>
@@ -58,4 +60,4 @@ This project uses cargo and can be run once cargo and rust are properly installe
 
 cargo run --features bevy/dynamic_linking
 
-<p align=“center”>[<a href=“#readme-top”>RETURN TO TOP</a>]</p>
+<p align="center">[<a href="#readme-top">RETURN TO TOP</a>]</p>
