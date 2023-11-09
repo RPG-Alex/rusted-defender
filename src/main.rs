@@ -243,9 +243,13 @@ fn sprite_control(
                 }
             }
 
+            if keyboard_input.pressed(KeyCode::Space) {
+                spawn_projectile(&mut commands, &asset_server, *location, PROJECTILE_SIZE, sprite_attributes.direction);
+            }
            // fires the projectile
             if keyboard_input.just_released(KeyCode::Space) {
-                    fire_projectile(&mut commands, &asset_server, *location, PROJECTILE_SIZE, sprite_attributes.direction);
+                //This is not working. Needs to be fixed
+                    fire_projectile;
                 } 
 
 
@@ -355,8 +359,9 @@ fn window_dimensions(windows: &mut Query<&mut Window>) -> (f32,f32) {
     (window.width()/2.0, window.height()/2.0)
 }
 
-//function for firing the projectile
-fn fire_projectile(
+
+//spawn a new projectil
+fn spawn_projectile(
     commands: &mut Commands,
     asset_server: &Res<AssetServer>,
     player_position: Transform,
@@ -364,28 +369,39 @@ fn fire_projectile(
     player_direction: Direction
 ) {
     let x_adjustment = player_position.translation.x - 75.0;
-        
+
     commands
-        .spawn(SpriteBundle {
-            sprite: Sprite {
-                custom_size: Some(projectile_size),
-                ..Default::default()
-            },
-            texture: asset_server.load("objects/rusty-fireball.png"),
-            
-            transform: Transform::from_xyz(x_adjustment, player_position.translation.y, 0.0),
+    .spawn(SpriteBundle {
+        sprite: Sprite {
+            custom_size: Some(projectile_size),
             ..Default::default()
-        })
-        .insert(SpriteAttributes{
-            id: 2, 
-            sprite_type: SpriteType::Projectile,
-            direction: {if player_direction == Direction::Left{
-                Direction::Right
-            } else {
-                Direction::Left
-            }},
-            movement_speed: PROJECTILE_SPEED,
-            size: PROJECTILE_SIZE,
-            visible: false,
-        });
+        },
+        texture: asset_server.load("objects/rusty-fireball.png"),
+        
+        transform: Transform::from_xyz(x_adjustment, player_position.translation.y, 0.0),
+        ..Default::default()
+    })
+    .insert(SpriteAttributes{
+        id: 2, 
+        sprite_type: SpriteType::Projectile,
+        direction: {if player_direction == Direction::Left{
+            Direction::Right
+        } else {
+            Direction::Left
+        }},
+        movement_speed: 0.0,
+        size: PROJECTILE_SIZE,
+        visible: false,
+    });
+}
+
+//function for firing the projectile
+fn fire_projectile(
+    sprites_info: Query<(Entity, &mut Transform, &mut SpriteAttributes)>,
+) {
+    for (_,_, sprite) in sprites_info.into_iter() {
+        if sprite.id == 2 && sprite.movement_speed == 0.0 {
+            sprite.movement_speed == MOVEMENT_SPEED;
+        }
+    }
 }
