@@ -21,9 +21,9 @@ const ENEMY_MOVEMENT_SPEED: f32 = 300.0;
 
 
 // Game Structures
-#[derive(Component)]
+#[derive(Component, Resource)]
 struct ChargeCounter {
-    time: Timer,
+    timer: Timer,
 }
 ///Create enum for distinguishing between sprites
 #[derive(Component, PartialEq)]
@@ -181,6 +181,7 @@ fn sprite_auto_movement(
 fn sprite_control(
     mut commands: Commands,
     mut sprite_info: Query<(Entity, &mut Transform, &mut SpriteAttributes)>, keyboard_input: Res<Input<KeyCode>>, 
+    mut charges: Query<&mut ChargeCounter>,
     mut windows: Query<&mut Window>,
     asset_server: Res<AssetServer>,
     time: Res<Time>,
@@ -195,13 +196,13 @@ fn sprite_control(
         }
 
 
-        // mut commands: Commands,
-        // mut sprite_info: Query<(Entity, &mut Transform, &mut SpriteAttributes)>,
-        // asset_server: Res<AssetServer>,
-        // projectile_size: Vec2
-
-
     if keyboard_input.just_pressed(KeyCode::Space) {
+        commands.insert_resource(ChargeCounter{
+            timer: Timer::new(Duration::from_secs(3), TimerMode::Once),
+        });
+        for mut charge in charges.iter_mut() {
+            charge.timer.tick(time.delta());
+        }
         spawn_projectile(&mut commands, &mut sprite_info,  asset_server, PROJECTILE_SIZE);
     }
 
