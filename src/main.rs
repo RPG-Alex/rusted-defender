@@ -13,11 +13,11 @@ const PROJECTILE_SIZE: Vec2 = Vec2::new(35.0, 35.0);
 //Charging projectil increases size
 const PROJECTILE_CHARGED_SIZE: Vec2 = Vec2::new(200.0, 200.0);
 //  Movement Speed might change depending on game values
-const MOVEMENT_SPEED: f32 = 1.0;
+const MOVEMENT_SPEED: f32 = 1000.0;
 //  Projectile speed might change depending on game feedback
 const PROJECTILE_SPEED: f32 = 1500.0;
 // ENemey movement speed
-const ENEMY_MOVEMENT_SPEED: f32 = 1.0;
+const ENEMY_MOVEMENT_SPEED: f32 = 300.0;
 
 
 // Game Structures
@@ -159,10 +159,10 @@ fn sprite_auto_movement(
 
             //Used to guide sprite in a square pattern based on direction
             match sprite_attributes.direction {
-                Direction::Up => location.translation.y += 150. * time.delta_seconds() + MOVEMENT_SPEED,
-                Direction::Down => location.translation.y -= 150. * time.delta_seconds() + MOVEMENT_SPEED,
-                Direction::Right => location.translation.x += 150. * time.delta_seconds() + MOVEMENT_SPEED,
-                Direction::Left => location.translation.x -= 150. * time.delta_seconds() + MOVEMENT_SPEED,
+                Direction::Up => location.translation.y += sprite_attributes.movement_speed * time.delta_seconds(),
+                Direction::Down => location.translation.y -= sprite_attributes.movement_speed * time.delta_seconds(),
+                Direction::Right => location.translation.x += sprite_attributes.movement_speed * time.delta_seconds(),
+                Direction::Left => location.translation.x -= sprite_attributes.movement_speed * time.delta_seconds(),
             }
     
             // Check the boundaries and update the direction
@@ -187,6 +187,23 @@ fn sprite_control(
 ){
     // get window dimensions
     let (window_width, window_height) = window_dimensions(&mut windows);
+
+    // fires the projectile
+    if keyboard_input.just_released(KeyCode::Space) {
+        //This is not working. Needs to be fixed
+            fire_projectile(&mut sprite_info);
+        }
+
+
+        // mut commands: Commands,
+        // mut sprite_info: Query<(Entity, &mut Transform, &mut SpriteAttributes)>,
+        // asset_server: Res<AssetServer>,
+        // projectile_size: Vec2
+
+
+    if keyboard_input.just_pressed(KeyCode::Space) {
+        spawn_projectile(&mut commands, &mut sprite_info,  asset_server, PROJECTILE_SIZE);
+    }
 
     for (entity, mut location, mut sprite_attributes) in sprite_info.iter_mut() {
         if sprite_attributes.sprite_type == SpriteType::Projectile {
@@ -214,7 +231,7 @@ fn sprite_control(
                     location.rotate_y(3.14159);
                     sprite_attributes.direction = Direction::Right;
                 }
-                location.translation.x -= sprite_attributes.movement_speed;
+                location.translation.x -= sprite_attributes.movement_speed * time.delta_seconds();
                 if location.translation.x < -window_width {
                     location.translation.x = window_width;
                 }
@@ -225,32 +242,26 @@ fn sprite_control(
                     sprite_attributes.direction = Direction::Left;
                 }
 
-                location.translation.x += sprite_attributes.movement_speed;
+                location.translation.x += sprite_attributes.movement_speed * time.delta_seconds();
                 if location.translation.x > window_width {
                     location.translation.x = -window_width;
                 }
             }
             if keyboard_input.pressed(KeyCode::Down) {
-                location.translation.y -= sprite_attributes.movement_speed;
+                location.translation.y -= sprite_attributes.movement_speed * time.delta_seconds();
                 if location.translation.y < -window_height{
                     location.translation.y = window_height;
                 }
             }
             if keyboard_input.pressed(KeyCode::Up) {
-                location.translation.y += sprite_attributes.movement_speed;
+                location.translation.y += sprite_attributes.movement_speed * time.delta_seconds();
                 if location.translation.y > window_height {
                     location.translation.y = -window_height;
                 }
             }
 
-            if keyboard_input.pressed(KeyCode::Space) {
-                spawn_projectile(&mut commands, &asset_server, *location, PROJECTILE_SIZE, sprite_attributes.direction);
-            }
-           // fires the projectile
-            if keyboard_input.just_released(KeyCode::Space) {
-                //This is not working. Needs to be fixed
-                    fire_projectile;
-                } 
+
+            
 
 
             
@@ -333,8 +344,8 @@ fn sprites_collide(
         }
     }
 
-    if let (Some(projectile_pos), Some(projectile_s), Some(enemy_pos), Some(enemy_s)) = (projectile_position, projectile_size, enemy_position, enemy_size){
-        let collision = collide(projectile_pos.translation, projectile_s, enemy_pos.translation, enemy_s);
+    if let (Some(projectile_pos), Some(projectile_s), Some(enemy_pos), Some(enemy_s)) = (projectile_position, projectile_size, enemy_position, enemy_size ){
+        let collision = collide(projectile_pos.translation, projectile_s, enemy_pos.translation, enemy_s/ 1.5);
         if collision.is_some() {
             for (entity, mut location, sprite_info) in sprites_info.iter_mut(){
                 if sprite_info.sprite_type == SpriteType::Projectile {
@@ -363,12 +374,23 @@ fn window_dimensions(windows: &mut Query<&mut Window>) -> (f32,f32) {
 //spawn a new projectil
 fn spawn_projectile(
     commands: &mut Commands,
-    asset_server: &Res<AssetServer>,
-    player_position: Transform,
-    projectile_size: Vec2,
-    player_direction: Direction
+    sprite_info: &mut Query<(Entity, &mut Transform, &mut SpriteAttributes)>,
+    asset_server: Res<AssetServer>,
+    projectile_size: Vec2
 ) {
-    let x_adjustment = player_position.translation.x - 75.0;
+    let mut player_direction: Direction = Direction::Right;
+    let mut player_position: Transform = Transform::from_xyz(0., 0., -10.);
+    let mut x_adjustment: f32 = 0.0;
+    for (_, location, sprite) in sprite_info.into_iter(){
+        if sprite.sprite_type == SpriteType::Player {
+            x_adjustment = location.translation.x - 75.0;
+            player_position = *location;
+            player_direction = sprite.direction;
+
+        }
+    }
+    
+    
 
     commands
     .spawn(SpriteBundle {
@@ -377,7 +399,6 @@ fn spawn_projectile(
             ..Default::default()
         },
         texture: asset_server.load("objects/rusty-fireball.png"),
-        
         transform: Transform::from_xyz(x_adjustment, player_position.translation.y, 0.0),
         ..Default::default()
     })
@@ -390,18 +411,18 @@ fn spawn_projectile(
             Direction::Left
         }},
         movement_speed: 0.0,
-        size: PROJECTILE_SIZE,
+        size: projectile_size,
         visible: false,
     });
 }
 
 //function for firing the projectile
 fn fire_projectile(
-    sprites_info: Query<(Entity, &mut Transform, &mut SpriteAttributes)>,
+    sprites_info: &mut Query<(Entity, &mut Transform, &mut SpriteAttributes)>,
 ) {
-    for (_,_, sprite) in sprites_info.into_iter() {
+    for (_,_, mut sprite) in sprites_info.iter_mut() {
         if sprite.id == 2 && sprite.movement_speed == 0.0 {
-            sprite.movement_speed == MOVEMENT_SPEED;
+            sprite.movement_speed = PROJECTILE_SPEED;
         }
     }
 }
