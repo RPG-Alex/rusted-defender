@@ -202,6 +202,9 @@ fn sprite_control(
         });
         for mut charge in charges.iter_mut() {
             charge.timer.tick(time.delta());
+            if charge.timer.finished() {
+                charge_projectile(&mut sprite_info);
+            }
         }
         spawn_projectile(&mut commands, &mut sprite_info,  asset_server, PROJECTILE_SIZE);
     }
@@ -424,6 +427,16 @@ fn fire_projectile(
     for (_,_, mut sprite) in sprites_info.iter_mut() {
         if sprite.id == 2 && sprite.movement_speed == 0.0 {
             sprite.movement_speed = PROJECTILE_SPEED;
+        }
+    }
+}
+
+fn charge_projectile(
+    sprites_info: &mut Query<(Entity, &mut Transform, &mut SpriteAttributes)>,
+) {
+    for (_, _, mut sprite) in sprites_info.iter_mut(){
+        if sprite.id == 2 {
+            sprite.size = PROJECTILE_CHARGED_SIZE;
         }
     }
 }
