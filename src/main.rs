@@ -10,8 +10,8 @@ use std::time::Duration;
 //Constants for the game
 const SPRITE_SIZE: Vec2 = Vec2::new(100.0,100.0);
 const PROJECTILE_SIZE: Vec2 = Vec2::new(35.0, 35.0);
-//Charging projectil increases size
-const PROJECTILE_CHARGED_SIZE: Vec2 = Vec2::new(200.0, 200.0);
+//Charging projectile scale 
+const PROJECTILE_CHARGED_SIZE: Vec3 = Vec3::new(5.0, 5.0, 0.0);
 //  Movement Speed might change depending on game values
 const MOVEMENT_SPEED: f32 = 1000.0;
 //  Projectile speed might change depending on game feedback
@@ -21,7 +21,7 @@ const ENEMY_MOVEMENT_SPEED: f32 = 300.0;
 
 
 // Game Structures
-#[derive(Component, Resource)]
+#[derive(Component, Debug, Resource)]
 struct ChargeCounter {
     timer: Timer,
 }
@@ -191,22 +191,22 @@ fn sprite_control(
 
     // fires the projectile
     if keyboard_input.just_released(KeyCode::Space) {
-        //This is not working. Needs to be fixed
-            fire_projectile(&mut sprite_info);
-        }
+        fire_projectile(&mut sprite_info);
+    }
 
 
     if keyboard_input.just_pressed(KeyCode::Space) {
-        commands.insert_resource(ChargeCounter{
-            timer: Timer::new(Duration::from_secs(3), TimerMode::Once),
+       commands.spawn(ChargeCounter{
+        timer: Timer::new(Duration::from_secs(2), TimerMode::Once),
         });
-        for mut charge in charges.iter_mut() {
-            charge.timer.tick(time.delta());
-            if charge.timer.finished() {
-                charge_projectile(&mut sprite_info);
-            }
-        }
         spawn_projectile(&mut commands, &mut sprite_info,  asset_server, PROJECTILE_SIZE);
+    } 
+    for mut charge in charges.iter_mut(){
+        charge.timer.tick(time.delta());
+        if charge.timer.finished(){
+            charge_projectile(&mut sprite_info);
+            commands.remove_resource::<ChargeCounter>();
+        }
     }
 
     for (entity, mut location, mut sprite_attributes) in sprite_info.iter_mut() {
@@ -434,9 +434,9 @@ fn fire_projectile(
 fn charge_projectile(
     sprites_info: &mut Query<(Entity, &mut Transform, &mut SpriteAttributes)>,
 ) {
-    for (_, _, mut sprite) in sprites_info.iter_mut(){
-        if sprite.id == 2 {
-            sprite.size = PROJECTILE_CHARGED_SIZE;
+    for (_, mut transform, sprite) in sprites_info.iter_mut(){
+        if sprite.sprite_type == SpriteType::Projectile {
+            transform.scale = PROJECTILE_CHARGED_SIZE;
         }
     }
 }
