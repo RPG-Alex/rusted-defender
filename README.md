@@ -29,7 +29,7 @@
 Welcome to Rusted Defender, a thrilling and action-packed game promising excitement and adventure! Prepare to embark on an unforgettable journey through a world of rust and adventure. Rusted Defender offers an exciting gaming experience, designed especially for primary school learners. Enter a world teeming with challenges, adversaries, and incredible adventures while enjoying a fantastic time.
 Status
 
-Please note that this project is currently under construction. Please check back for updates!
+Please note that this project is currently under construction. It has just been rolled over from V0.1 to V0.2, which is a complete rework. If you are looking for V0.1, please note it is still present in a sub directory. Please check back for updates!
 
 ## Roadmap
 
@@ -42,7 +42,7 @@ Please note that this project is currently under construction. Please check back
 
 ### Not Done:
 
-
+- [ ] Move to new version (remake) of gamee using what we learned in V0.1
 - [ ] Develop a splash screen.
     - [ ] Design a visually appealing splash screen.
     - [ ] Implement a loading animation.
