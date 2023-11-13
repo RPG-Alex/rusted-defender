@@ -3,6 +3,6 @@ name = "rusted-defender"
 version = "0.2.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
+bevy = {veresion= "0.12.0", features = ["dynamic_linking"]}
+rand = "0.8.5"
