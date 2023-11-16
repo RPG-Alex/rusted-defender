@@ -22,7 +22,6 @@ struct Enemy;
 // Taken from the bevy example
 const NORMAL_BUTTON: Color = Color::rgb(0.15, 0.15, 0.15);
 const HOVERED_BUTTON: Color = Color::rgb(0.25, 0.25, 0.25);
-const PRESSED_BUTTON: Color = Color::rgb(0.35, 0.75, 0.35);
 fn button_system(
     mut interaction_query: Query<
         (
@@ -38,17 +37,12 @@ fn button_system(
     for (interaction, mut color, mut border_color, children) in &mut interaction_query {
         let mut text = text_query.get_mut(children[0]).unwrap();
         match *interaction {
-            Interaction::Pressed => {
-                text.sections[0].value = "Lets Go".to_string();
-                *color = PRESSED_BUTTON.into();
-                border_color.0 = Color::RED;
-            }
-            Interaction::Hovered => {
+           Interaction::Hovered => {
                 text.sections[0].value = "Start the Adventure".to_string();
                 *color = HOVERED_BUTTON.into();
                 border_color.0 = Color::WHITE;
             }
-            Interaction::None => {
+           _ => {
                 text.sections[0].value = "START".to_string();
                 *color = NORMAL_BUTTON.into();
                 border_color.0 = Color::BLACK;
