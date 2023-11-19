@@ -9,7 +9,7 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .insert_resource(WinitSettings::desktop_app())
-        .add_systems(Startup, setup::setup)
+        .add_systems(Startup, (setup::setup, main_screen::setup_buttons))
         .add_systems(Update, (bevy::window::close_on_esc, main_screen::button_system))
         .run();
 }
