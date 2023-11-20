@@ -22,6 +22,10 @@ pub fn button_system(
                 text.sections[0].value = "Start the Adventure".to_string();
                 *color = HOVERED_BUTTON.into();
                 border_color.0 = Color::WHITE;
+            },
+            Interaction::Pressed => {
+                *color = Color::rgb(0.0, 0.0, 0.0).into();
+                border_color.0 = Color::WHITE;
             }
            _ => {
                 text.sections[0].value = "START".to_string();
@@ -74,4 +78,25 @@ pub fn setup_buttons(mut commands: Commands, asset_server: Res<AssetServer>) {
                     ));
                 });
         });
+        commands.spawn(Camera2dBundle::default());
+
+        commands.spawn((SpriteBundle {
+            sprite: Sprite { 
+                ..default()
+             },
+             texture: asset_server.load("backgrounds/splash.png"),
+             transform: Transform::from_xyz(0.0, 0.0, -10.0),
+             ..default()
+        }));
 }
+
+pub fn menu_select(
+    commands: Commands,
+    mut all_assets: Query<Entity>,
+) {
+    for (mut entity) in &mut all_assets {
+        
+    }
+}
+
+//mut commands: Commands, asset_server: Res<AssetServer>
