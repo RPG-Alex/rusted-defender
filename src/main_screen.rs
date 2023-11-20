@@ -91,11 +91,12 @@ pub fn setup_buttons(mut commands: Commands, asset_server: Res<AssetServer>) {
 }
 
 pub fn menu_select(
+    //need to figure what needs to be passed to this. Or do I need to do this?
     commands: Commands,
     mut all_assets: Query<Entity>,
 ) {
     for (mut entity) in &mut all_assets {
-        
+        // do stuff
     }
 }
 
