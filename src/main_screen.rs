@@ -14,6 +14,8 @@ pub fn button_system(
         (Changed<Interaction>, With<Button>),
         >,
     mut text_query: Query<&mut Text>,
+    mut commands: Commands,
+    mut query: Query<Entity, With<Button>>,
 ) {
     for (interaction, mut color, mut border_color, children) in &mut interaction_query {
         let mut text = text_query.get_mut(children[0]).unwrap();
@@ -24,8 +26,7 @@ pub fn button_system(
                 border_color.0 = Color::WHITE;
             },
             Interaction::Pressed => {
-                *color = Color::rgb(0.0, 0.0, 0.0).into();
-                border_color.0 = Color::WHITE;
+                delete_button(&mut commands, &mut query);
             }
            _ => {
                 text.sections[0].value = "START".to_string();
@@ -90,14 +91,8 @@ pub fn setup_buttons(mut commands: Commands, asset_server: Res<AssetServer>) {
         }));
 }
 
-pub fn menu_select(
-    //need to figure what needs to be passed to this. Or do I need to do this?
-    commands: Commands,
-    mut all_assets: Query<Entity>,
-) {
-    for (mut entity) in &mut all_assets {
-        // do stuff
+fn delete_button(commands: &mut Commands, query: &mut Query<Entity, With<Button>>) {
+    for entity in query.iter() {
+        commands.entity(entity).remove::<Button>();
     }
 }
-
-//mut commands: Commands, asset_server: Res<AssetServer>
