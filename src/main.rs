@@ -20,27 +20,3 @@ fn main() {
         )
         .run();
 }
-
-#[derive(Component)]
-struct Player;
-
-#[derive(Component)]
-struct Enemy;
-
-
-// fn main() {
-//     App::new()
-//         .add_plugins(DefaultPlugins)
-//         // Only run the app when there is user input. This will significantly reduce CPU/GPU use.
-//         .insert_resource(WinitSettings::desktop_app())
-//         .add_systems(Startup, setup)
-//         .add_systems(
-//             Update,
-//             (
-//                 buttons_handler::<Display>,
-//                 buttons_handler::<Visibility>,
-//                 text_hover,
-//             ),
-//         )
-//         .run();
-// }
