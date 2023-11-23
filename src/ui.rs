@@ -57,7 +57,7 @@ impl TargetUpdate for Target<Visibility> {
     }
 }
 
-pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+pub fn main_screen(mut commands: Commands, asset_server: Res<AssetServer>) {
     let palette = PALETTE.map(|hex| Color::hex(hex).unwrap());
 
     let text_style = TextStyle {
@@ -65,8 +65,18 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         font_size: 24.0,
         ..default()
     };
-
+    // currently camera bundle is also here 
     commands.spawn(Camera2dBundle::default());
+
+    commands.spawn((SpriteBundle{
+        sprite: Sprite {
+            //custom_size: Some(Vec2::new(100.0,100.0)),
+            ..default()
+        },
+        texture: asset_server.load("backgrounds/splash.png"),
+        ..default()
+    }));
+    
     commands.spawn(NodeBundle {
         style: Style {
             width: Val::Percent(100.),
@@ -76,12 +86,12 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             justify_content: JustifyContent::SpaceEvenly,
             ..Default::default()
         },
-        background_color: BackgroundColor(Color::BLACK),
+        //background_color: BackgroundColor(Color::BLACK),
         ..Default::default()
     }).with_children(|parent| {
         parent.spawn(TextBundle {
             text: Text::from_section(
-                "Use the panel on the right to change the Display and Visibility properties for the respective nodes of the panel on the left",                
+                "The Rustiest game out there!",                
                 text_style.clone(),
             ).with_alignment(TextAlignment::Center),
             style: Style {
@@ -476,4 +486,10 @@ pub fn text_hover(
             }
         }
     }
+}
+
+//This function gets our window info (x,y dimensions)
+fn window_dimensions(windows: &mut Query<&mut Window>) -> (f32,f32) {
+    let window = windows.single_mut();
+    (window.width()/2.0, window.height()/2.0)
 }
