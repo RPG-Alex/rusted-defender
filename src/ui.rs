@@ -4,6 +4,7 @@
 
 use bevy::prelude::*;
 use bevy::winit::WinitSettings;
+use bevy::ecs::system::EntityCommands;
 
 const PALETTE: [&str; 4] = ["27496D", "466B7A", "669DB3", "ADCBE3"];
 const HIDDEN_COLOR: Color = Color::rgb(1.0, 0.7, 0.7);
@@ -57,6 +58,9 @@ impl TargetUpdate for Target<Visibility> {
     }
 }
 
+#[derive (Resource)]
+struct Background(EntityCommands<'_, '_, '_>);
+
 pub fn main_screen(mut commands: Commands, asset_server: Res<AssetServer>) {
     let palette = PALETTE.map(|hex| Color::hex(hex).unwrap());
 
@@ -68,15 +72,23 @@ pub fn main_screen(mut commands: Commands, asset_server: Res<AssetServer>) {
     // currently camera bundle is also here 
     commands.spawn(Camera2dBundle::default());
 
-    commands.spawn((SpriteBundle{
+    // This part will be used to resize backgrounds to match the view size
+    // Not working yet. Need to figure out how to insert
+
+    let background_entity = commands.spawn(SpriteBundle {
         sprite: Sprite {
-            //custom_size: Some(Vec2::new(100.0,100.0)),
-            ..default()
+            //custom_size: Some(Vec2::new(100.0, 100.0)),
+            ..Default::default()
         },
         texture: asset_server.load("backgrounds/splash.png"),
-        ..default()
-    }));
+        ..Default::default()
+    },);
+
+    // Store the background entity in a resource
+    commands.insert_resource(Background(background_entity));
     
+    ///
+
     commands.spawn(NodeBundle {
         style: Style {
             width: Val::Percent(100.),
@@ -493,3 +505,4 @@ fn window_dimensions(windows: &mut Query<&mut Window>) -> (f32,f32) {
     let window = windows.single_mut();
     (window.width()/2.0, window.height()/2.0)
 }
+
