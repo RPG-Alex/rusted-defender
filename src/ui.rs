@@ -58,8 +58,6 @@ impl TargetUpdate for Target<Visibility> {
     }
 }
 
-#[derive (Resource)]
-struct Background(EntityCommands<'_, '_, '_>);
 
 pub fn main_screen(mut commands: Commands, asset_server: Res<AssetServer>) {
     let palette = PALETTE.map(|hex| Color::hex(hex).unwrap());
@@ -72,22 +70,19 @@ pub fn main_screen(mut commands: Commands, asset_server: Res<AssetServer>) {
     // currently camera bundle is also here 
     commands.spawn(Camera2dBundle::default());
 
-    // This part will be used to resize backgrounds to match the view size
-    // Not working yet. Need to figure out how to insert
-
-    let background_entity = commands.spawn(SpriteBundle {
+    
+    let background = SpriteBundle {
         sprite: Sprite {
             //custom_size: Some(Vec2::new(100.0, 100.0)),
             ..Default::default()
         },
         texture: asset_server.load("backgrounds/splash.png"),
         ..Default::default()
-    },);
-
-    // Store the background entity in a resource
-    commands.insert_resource(Background(background_entity));
+    };
     
-    ///
+    commands.spawn(background).id();
+    
+    
 
     commands.spawn(NodeBundle {
         style: Style {
@@ -505,4 +500,16 @@ fn window_dimensions(windows: &mut Query<&mut Window>) -> (f32,f32) {
     let window = windows.single_mut();
     (window.width()/2.0, window.height()/2.0)
 }
+
+// Not working properly yet. Need to 
+pub fn set_background_size_to_window(
+    windows: Query<&mut Window>, 
+    mut entities: Query<&mut Transform, With<Sprite>>,
+
+) {
+    for size in entities.iter_mut() {
+        println!("{:#?}", size);
+    }
+}
+
 
