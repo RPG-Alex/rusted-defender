@@ -501,15 +501,16 @@ fn window_dimensions(windows: &mut Query<&mut Window>) -> (f32,f32) {
     (window.width()/2.0, window.height()/2.0)
 }
 
+use crate::Background;
 // Not working properly yet. Need to 
 pub fn set_background_size_to_window(
-    windows: Query<&mut Window>, 
-    mut entities: Query<&mut Transform, With<Sprite>>,
-
+    mut windows: Query<&mut Window>, 
+    mut sprite: Query<(Entity, &mut Sprite, &Background, &mut Transform)>,
 ) {
-    for size in entities.iter_mut() {
-        println!("{:#?}", size);
+ 
+    for (entity, sprite, background, mut size) in sprite.iter_mut() {
+        if background.id == 1 {
+            let window_size = window_dimensions(&mut windows);
+        }
     }
 }
-
-
