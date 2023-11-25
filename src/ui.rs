@@ -511,6 +511,7 @@ pub fn set_background_size_to_window(
     for (entity, sprite, background, mut size) in sprite.iter_mut() {
         if background.id == 1 {
             let window_size = window_dimensions(&mut windows);
+            size = 
         }
     }
 }
