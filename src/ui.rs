@@ -58,6 +58,10 @@ impl TargetUpdate for Target<Visibility> {
     }
 }
 
+#[derive(Component, PartialEq)]
+pub struct Background {
+    id: u8,
+}
 
 pub fn main_screen(mut commands: Commands, asset_server: Res<AssetServer>) {
     let palette = PALETTE.map(|hex| Color::hex(hex).unwrap());
@@ -71,17 +75,19 @@ pub fn main_screen(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(Camera2dBundle::default());
 
     
-    let background = SpriteBundle {
+    commands.spawn( SpriteBundle {
         sprite: Sprite {
-            //custom_size: Some(Vec2::new(100.0, 100.0)),
+            custom_size: Some(Vec2::new(1.0, 1.0)),
             ..Default::default()
         },
         texture: asset_server.load("backgrounds/splash.png"),
         ..Default::default()
-    };
-    
-    commands.spawn(background).id();
-    
+    }).insert(
+        Background{
+            id:1,
+        }
+    );
+
     
 
     commands.spawn(NodeBundle {
@@ -498,20 +504,22 @@ pub fn text_hover(
 //This function gets our window info (x,y dimensions)
 fn window_dimensions(windows: &mut Query<&mut Window>) -> (f32,f32) {
     let window = windows.single_mut();
-    (window.width()/2.0, window.height()/2.0)
+    (window.width()//2.0
+    , 
+    window.height()//2.0
+    )
 }
 
-use crate::Background;
-// Not working properly yet. Need to 
+
 pub fn set_background_size_to_window(
     mut windows: Query<&mut Window>, 
     mut sprite: Query<(Entity, &mut Sprite, &Background, &mut Transform)>,
 ) {
  
-    for (entity, sprite, background, mut size) in sprite.iter_mut() {
+    for (entity, mut sprite, background, mut size) in sprite.iter_mut() {
         if background.id == 1 {
-            let window_size = window_dimensions(&mut windows);
-            size = 
+            let (win_width, win_height) = window_dimensions(&mut windows);
+            size.scale = Vec3::new(win_width, win_height, 1.0);
         }
     }
 }

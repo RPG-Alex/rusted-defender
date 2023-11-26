@@ -12,8 +12,7 @@ fn main() {
         .add_plugins(DefaultPlugins)
         //.insert_resource(WinitSettings::desktop_app())
         .add_systems(Startup, 
-            //ui::main_screen, 
-            sprite_test)
+            ui::main_screen)
         .add_systems(
             Update, (
                 ui::buttons_handler::<Display>,
@@ -26,23 +25,3 @@ fn main() {
         .run();
 }
 
-
-#[derive(Component, PartialEq)]
-struct Background {
-    id: u8,
-}
-
-fn sprite_test(mut commands: Commands, asset_server: Res<AssetServer>) {
-
-    commands.spawn(SpriteBundle {
-        sprite: Sprite {
-            ..default()
-        },
-        texture: asset_server.load("backgrounds/splash.png"),
-        ..default()
-    }).insert(
-        Background{
-            id:1,
-        }
-    );
-}
