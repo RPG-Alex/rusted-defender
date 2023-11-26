@@ -504,10 +504,7 @@ pub fn text_hover(
 //This function gets our window info (x,y dimensions)
 fn window_dimensions(windows: &mut Query<&mut Window>) -> (f32,f32) {
     let window = windows.single_mut();
-    (window.width()//2.0
-    , 
-    window.height()//2.0
-    )
+    (window.width(),window.height())
 }
 
 
